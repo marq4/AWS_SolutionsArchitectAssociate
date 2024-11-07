@@ -1,0 +1,51 @@
+* Course: SAA-S03. 
+* Exam Domains. Design $ Architecture:
+	+ Secure. 
+	+ Resilient. 
+	+ High-Performing. 
+	+ Cost-Optimized. 
+
+
+____________________________________ S3 _______________________________________
+
+* Unlimited object storage. 
+* Serverless. 
+* Object: 
+	- Key (name): value (data). 
+	- Version. 
+	- Metadata. 
+* Buckets: 
+	- Hold objects (and simulate /folders/). 
+* Range: 0B to 5TB. 
+
+
+* CLI:
+	+ High level: 						$ aws s3 
+	+ Low level: 						$ aws s3api 
+	+ Best region for me: us-east-2 (Ohio). 
+
+* Bash: 
+	+ Get jq: 							$ choco install jq 
+	+ To avoid "no such file or dir" I had to create the temp json file in current dir, instead of /tmp/. 
+
+* PowerShell: 
+	+ Install AWS CLI for PowerShell: 			$ Install-Module -Name AWS.Tools.Installer 
+	+ Install S3 module: 				$ Install-AWSToolsModule AWS.Tools.S3 
+	// Note: I couldn't manage to install AWS-S3 powershell module. 
+
+* SDK: 
+	+ Ruby: 
+		- Ruby file extention: .rb. 
+		- Package manager: bundler. 
+		- Install ruby: 				https://rubyinstaller.org/downloads/ 	; 	Re-open VS Code. 
+		- Create gem file: 				$ bundle init 
+		- Download gems: 				$ bundle install 
+		- Run program: 				$ BUCKET_NAME='marq----ruby-bucket' bundle exec ruby s3.rb 
+
+	+ Java: 
+		- Developer tools website: 			https://aws.amazon.com/products/developer-tools/
+
+	+ Python: 
+		- pip install boto3
+
+########################################################

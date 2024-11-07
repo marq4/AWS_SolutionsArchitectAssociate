@@ -1,0 +1,20 @@
+________________ Ruby challenge ________________ 
+
+* Create a bucket. 
+* Upload some files to the bucket. 
+
+===============================================
+
+
+________________ Java challenge ________________ 
+
+* Create a Maven project. 
+
+===============================================
+
+
+________________ Python challenge ________________ 
+
+* List buckets (names only, sort by most recently created). 
+* Create bucket. 
+* Upload file. 

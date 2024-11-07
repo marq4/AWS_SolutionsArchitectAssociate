@@ -1,0 +1,19 @@
+___________ Challenge ___________ 
+* Using CLI: 
+	(1) Create a bucket on us-east-2 region. It has to be in that region to avoid an error!!! 
+	(2) List all buckets, display as YAML. 
+	(3) Get the name of the bucket (JMESPath). 
+	(4) Upload a couple of text files inside a dir to S3. 
+	(5) Download one of those files. 
+	(6) Display all objects in the bucket, keys only. 
+	(7) Move one of the files over to the new folder. 
+
+_ Solution _
+	* Generate a unique bucket name: BUCKET_NAME=$(echo `date | tr -d ' \t\r\n,:'` | awk '{print tolower($0)}') 
+	(1): aws s3api create-bucket --bucket $BUCKET_NAME --region us-east-1 
+	(2) aws s3api list-buckets --output yaml 
+	(3) aws s3api list-buckets --query Buckets[0].Name --output json 
+	(4) mkdir MyFolder/ ; echo "Hello S3!!!" > file.txt ; aws s3 cp MyFolder/ s3://$BUCKET_NAME --recursive 
+	(5) mkdir DownloadedFromS3 ; cd DownloadedFromS3 ; aws s3api get-object --bucket $BUCKET_NAME --key file.txt 
+	(6) aws s3api list-objects-v2 --bucket $BUCKET_NAME --output json --query Contents[*].Key 
+	(7) aws s3 mv s3://$BUCKET_NAME/file1.txt s3://BUCKET_NAME/folder/file1.txt 

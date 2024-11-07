@@ -1,0 +1,12 @@
+_____________________ Challenge _____________________ 
+* Create bash scripts to do:
+	(1) + List buckets (name only), 
+		- Order by creation date (newest on top), 
+		- Only top 2 results (if there are more then "..."). 
+	(2) + Get newest bucket. 
+	(3) + Create bucket in region: us-east-2. 
+		- In SUC should say "Successfully created the new bucket in region $ ! " 
+	(4) + Upload file to bucket. 
+	(5) + Explore newest bucket (display contents). 
+	(6) + Explore a bucket (display only the object names). 
+	(7) + Delete bucket along with all its contents. 

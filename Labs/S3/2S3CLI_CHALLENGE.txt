@@ -1,0 +1,9 @@
+___________ Challenge ___________ 
+* Using CLI: 
+	(1) + Create a bucket on us-east-2 region. 
+	(2) + List all buckets, display as YAML. 
+	(3) + Get the name of the bucket (JMESPath). 
+	(4) + Upload a couple of text files inside a dir to S3. 
+	(5) + Download one of those files. 
+	(6) + Display all objects in the bucket, keys only. 
+	(7) + Move one of the files over to the new folder. 

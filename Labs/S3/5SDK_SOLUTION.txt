@@ -1,0 +1,42 @@
+________________ Ruby challenge ________________ 
+
+.Create a bucket. 
+.Upload some files to the bucket. 
+
+_ Solution _ 
+* s3.rb 
+
+===============================================
+
+
+________________ Java challenge ________________ 
+
+.Create a Maven project. 
+
+_ Solution _ 
+* Create a Maven project via archetype generate: 
+	+ https://aws.amazon.com/developer/tools/ ; AWS SDK for Java ; Developer guide HTML > Setup > Set up an Apache Maven project. 
+	+ Edit the maven command: region, archetypeVersion, groupId, artifactId: 
+mvn --batch-mode archetype:generate \
+ -DarchetypeGroupId=software.amazon.awssdk \
+ -DarchetypeArtifactId=archetype-lambda -Dservice=s3 -Dregion=US_EAST_2 \
+ -DarchetypeVersion=2.29.6 \
+ -DgroupId=com.marq.randomvideoclipgenerator \
+ -DartifactId=randomvideoclipgenerator
+
+===============================================
+
+
+________________ Python challenge ________________ 
+
+.List buckets (names only, sort by most recently created). 
+.Create bucket. 
+.Upload file. 
+
+
+_ Solution _
+
+* list_buckets.py 
+* create_bucket.py 
+* upload_file.py 
+

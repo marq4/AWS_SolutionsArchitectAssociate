@@ -1,0 +1,6 @@
+____________ Challenge ____________ 
+
+* Be able to run these commands in Git Bash / Visual Studio Code: 
+	(1) + aws --version 
+	(2) + aws sts get-caller-id 
+	(3) + aws s3 ls 
