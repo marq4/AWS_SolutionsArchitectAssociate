@@ -1,0 +1,7 @@
+______________ Challenge ______________ 
+
+(1) * Install terraform. 
+(2) * Specify aws provider in a terraform.tf file. 
+(3) * Create the most minimal configuration possible for a bucket (all defaults). 
+(4) * Remove all resources. 
+

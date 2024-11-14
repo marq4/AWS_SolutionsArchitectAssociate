@@ -1,0 +1,7 @@
+___________ Challenge ___________ 
+
+(1) * Create the most minimal configuration possible to create a bucket (all defaults). 
+(2) * Update the configuration to create another bucket in region us-east-2. 
+	+ Make it so I need to manually accept the changeset. 
+(3) * Delete the stack via CLI. 
+

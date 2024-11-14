@@ -1,0 +1,17 @@
+___________ Challenge ___________ 
+
+Using Terraform: 
+	Create a bucket. 
+	Upload a file to it. 
+
+Now change the content of the file. Notice how terraform plan sees no S3 changes. 
+
+Make Terraform track the contents of the file using its ETag. 
+
+
+_ Solution _ 
+
+* Configuration files: terraform.tf, track_s3_content.tf 
+* Deploy resources: 						$ terraform validate, terraform plan, terraform apply 
+* Display S3 object contents: 					$ aws s3 cp s3://$LATEST_BUCKET/hello.txt - && cat -
+* As I am managing the local text file and its content also with Terraform, I need to run the apply twice: once for updating the local text file content, and the second time to update the etag (and the object itself too). 

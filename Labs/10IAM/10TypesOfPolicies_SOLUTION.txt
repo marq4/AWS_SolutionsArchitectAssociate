@@ -1,0 +1,33 @@
+___________ Challenge ___________ 
+
+Using Terraform: 
+	Create a new user: PoliciesExampleuser. 
+	Attach an AWS-managed policy: ViewOnlyAccess (job). 
+	Define an in-line policy: allow very action under S3 (all resources). 
+	Attach this new policy to the user. 
+Try to list all buckets as this new user before and after applying the policies. 
+
+
+_ Solution _ 
+
+* Created terraform.tf file with aws and pgp providers. 
+* Created user_password.tf file with the user and its initial password. 
+* terraform fmt, validate, init 
+* Initial password (from terraform): c$zzn%[y06RL_bWV6raY 
+* Generated new password from Random.org: mzLCqmbwSaf3NPLEC6RA 
+	ERROR: User "PoliciesExample.User" cannot change their password: "Either user is not authorized to perform iam:ChangePassword or entered password does not comply with account password policy set by administrator." 
+* Give this user iam:ChangePassword permission by attachin in-line policy: policies.tf, attach_policies_user.tf. 
+* Logged on as PoliciesExample.User with initial password and was asked to change it. Updated to new password. 
+* Confirmed user has no permissions. 
+* Added ReadOnlyAccess policy and attached it to user. 	$ terraform apply 
+* Confirmed user can now see the buckets. 
+* Added PoliciesExampleUser-S3All attachment. 
+* Created a bucket. 
+
+
+* Files: terraform.tf, user_password.tf, policies.tf, attach_policies_user.tf. 
+
+* References: 
+	+ https://www.reddit.com/r/Terraform/comments/t9jcms/aws_iam_user_with_password_access_and_secret_keys/?rdt=32956 
+	+ https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_enable-user-change.html 
+

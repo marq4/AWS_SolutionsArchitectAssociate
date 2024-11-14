@@ -1,0 +1,10 @@
+___________ Challenge ___________ 
+
+* Python: 
+	* Create the most minimal configuration to have a bucket (all defaults). 
+	* Remove the resources. 
+
+
+_ Solution _
+
+https://blog.devops.dev/create-an-s3-bucket-with-aws-cdk-e012b43c3511 

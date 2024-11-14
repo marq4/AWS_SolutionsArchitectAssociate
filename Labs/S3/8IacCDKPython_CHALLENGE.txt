@@ -1,0 +1,6 @@
+___________ Challenge ___________ 
+
+* Python: 
+	* Create the most minimal configuration to have a bucket (all defaults). 
+	* Remove the resources. 
+

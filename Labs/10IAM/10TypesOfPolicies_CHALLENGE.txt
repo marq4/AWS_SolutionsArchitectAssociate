@@ -1,0 +1,10 @@
+___________ Challenge ___________ 
+
+* Using Terraform: 
+	+ Create a new user: PoliciesExampleuser. 
+	+ Attach an AWS-managed policy: ViewOnlyAccess (job). 
+	+ Define an in-line policy: allow very action under S3 (all resources). 
+	+ Attach this new policy to the user. 
+* Try to list all buckets as this new user before and after applying the policies. 
+
+

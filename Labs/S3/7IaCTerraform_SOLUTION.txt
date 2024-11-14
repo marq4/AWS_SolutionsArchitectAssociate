@@ -1,0 +1,23 @@
+______________ Challenge ______________ 
+
+(1) Install terraform. 
+(2) Specify aws provider in a terraform.tf file. 
+(3) Create the most minimal configuration possible for a bucket (all defaults). 
+(4) Remove all resources. 
+
+
+_ Solution _ 
+
+(1): terraform --version 
+(2): 
+	+ terraform.tf 
+	+ Download aws plugin: 					$ terraform init 
+	+ terraform validate 
+(3): 
+	+ main.tf 
+	+ terraform plan 
+	+ terraform apply 
+	+ ../../3S3Bash/newest_bucket.sh 
+(4): terraform destroy 
+
+
