@@ -16,7 +16,240 @@ ____________________________________ S3 _______________________________________
 	- Metadata. 
 * Buckets: 
 	- Hold objects (and simulate /folders/). 
+	- Naming: 
+		' Similar to (and used in) URLs. 
+		' 3-63 chars long. 
+		' lowercase numbers . - 				# No .. 
+		' Must begin and end with alphanumeric. 
+		' No IP format. 
+		' Invalid prefixes: xn--, sthree-config. 
+		' Invalid postfixes: -s3alias. 
+	- Restrictions: 
+		' 100 buckets. SR: 1,000. 
+		' Use multi-part upload for files > 100MB. Process: create-miultipart-upload, get Upload_ID, upload-part ..., complete-multipart-upload (provide json with etags). // Parts can be numbered 1..1000. 
+	- Types: 
+		' General Purpose: 
+			; Flat. 
+			; Cannot be used with S3 Express One Zone storage class. 
+		' Directory: 
+			; Only for S3 Express One Zone storage class. 
+			; single-digit millisecond performance on PUT and GET. 
+			; Limit: 10. 
+	- Objects: 
+		' Resources that represent data, not infra. 
+		' Etags (entity tags): to tell if content changed. Part of HTTP protocol. Used by caching systems. Hash of the object contents (not metadata). 
+		' Locking: make immutable. 
+		' Checksums: ensure integrity of a file. 
+		' Metadata: 
+			; System defined: 
+				` Content Type. 
+				` Cache Control. 
+				` Content Disposition. 
+				` Content-Encoding.  
+				` Content-Language. 
+				` Expires. 
+				` X-amz-website-redirection-location. 
+			; User defined: 
+				` Prefix: x-amz-meta- 
+		' WORM: Write Once Read Many. 
+		' Lock: prevent deletion. Must be specified at creation time. Only programmatically. 
+			; Retention period. 
+			; Legal hold. 
+		' URI: s3://. 
+		' CLI: 
+			; s3. 
+			; s3api 
+			; s3control: access points. 
+			; s3outposts 
+		' Requests: 
+			; Virtual hosted. 
+			; Path-style. 
+		' Storage Classes: 
+			; Durability: 99.999999999% 
+			; Standard (default): fast, available, durable. 
+				` Availability: 99.99% 
+				` Retrieval: milliseconds. 
+				` Throughput: frequently or real-time access. 
+				` Pricing per: GB, request. 
+			; Reduced Redundancy Storage (RRS): legacy. 
+				` Noncritical data. Not recommended. 
+			; Intelligent Tiering: uses ML, extra fee to analyze. 
+				` Auto: frequent. 
+				` If not accessed in 30 days: infrequent. 
+				` 90 days: Archive Instant. 
+				` Optional: Archive Access. 
+				` Optional: Deep Archive. 
+				` At least 30 days. 
+			; Express One-Zone: single-digit ms perf, half price than Standard. 
+				` Delivers consistent single-digit millisecond data access. 
+				` For: most frequently accessed data, latency-sensitive apps. 
+				` Lowest latency. 10x faster than Standard. 
+				` 50% cheaper than Standard. 
+				` Stored in Directory bucket. 
+			; Standard-IA (Infrequent Access): fast, cheaper if access > once/month. Fee to retrieve. 
+				` Availability: 99.9%. 
+				` Disaster recovery, backups, long-term. 
+				` Retrieval fee. 
+				` Min 30 days. 
+			; One-Zone IA: 20% cheaper. Data CAN be lost. 
+				` Availability: 99.5%. 
+				` 20% cheaper than Standard-IA. 
+				` Retrieval: milliseconds. 
+				` For: backup on-prem data, data than can be recreated if AZ disaster, non-mission crtitical. 
+				` Pricing: per GB, per request, retrieval fee, min 30 days. 
+			; Glacier Instant Retrieval: long-term cold storage. Get data instantly. 
+				` Rarely accessed data. 
+				` Availability: 99.9%. 
+				` 68% cheaper than Standar-IA. 
+				` For: data accessed one per quarter. Use cases: image hosting, online file-sharing apps, medical imaging, health records, news media assets, satellite imaging. 
+				` Retrieval: milliseconds. 
+				` Pricing: per GB, per request, retrieval fee, min 90 days. 
+				` NOT VAULT. 
+			; Glacier Flexible: 
+				` Retrieval Tiers: 
+					° Expediated: 1-5m, Lim: 250MB. 
+					° Standard: 3-5h, default. 
+					° Bulk: 5-12h. 
+				` Pricing: per GB retrieved, number of requests, storage. 
+				` I should store fewer and larger files due to the 40KB overhead. 
+				` NOT VAULT. 
+			; Glacier Deep Archive: 12h. 
+				` Retrieval Tiers: 
+					° Standard: 12-48h, default. 
+					° Bulk: 12-48h. 
+				` More expensive retrieval fee. 
+				` Min: 180 days. 
+				` NOT VAULT. 
+			; Outposts. 
+
 * Range: 0B to 5TB. 
+* Glacier: "Vault". 
+	+ Deep Archive. 
+
+* Security: 
+	+ Bucket Policies: bucket-level permissions, JSON access policy. 
+	+ ACL (Access Control Lists): legacy. 
+		- Grant basic r/w. 
+		- To other accounts. 
+	+ Internetwork Traffic Privacy.
+		- PrivateLink (VPC Interface Endpoint): 
+			` Private netw access. 
+			` Connect an ENI (Elastic Netw Interface) directly to other services, 3rd parties, accounts. 
+			` Fine-grain permissions. 
+		- VPC GW Endpoint: 
+			' Free. 
+			' Reliable connectivity to S3 and DynamoDB (without IGW, NAT). 
+	+ CORS (Cross-Origin Resource Sharing): 
+		- HTTP-header based mechanism allows a server to let other origins load resources. 
+	+ Block Public Access: 
+		- New ACLs. 
+		- Any ACLs. 
+		- New Bucket Policies or Access Points. 
+		- Any Bucket Policies or Access Points. 
+	+ IAM Access Analyzer. 
+		- Alerts me if my bucket is exposed to the internet. 
+		- I must first create an analyzer at account level. 
+	+ Object Ownership. 
+	+ Access Points: named netw endpoints that are attached to buckets. 
+	+ Access Grants: 
+		- Map identities in a Directory Service such as Active Directory. 
+		- Access Grants Instance: logical container. 
+	+ Versioning: preserves, retrieves, restores. 
+	+ MFA Delete. 
+	+ Object Tags: organize. 
+	+ In-Transit Encryption: over internet. 
+	+ Server-Side Encryption: 
+		- Always on by default. 
+		- SSE-S3: AES-GCM 256-bit. 
+		- SSE-KMS: I manage the keys and use Key Mgmt Service. For compliance. Required: kms:GenerateDataKey permission. 
+		- SSE-C (Customer): I manage and provide the keys. 
+			` AES256. 
+			` AWS does not hold on to my key but they store a salted Hash-based Message Authentication Code (HMAC). 
+		- DSSE-KMS: Dual-layer server-side (also enc at client side). 
+	+ Client-Side Encryption: TLS 1.3. 
+		- When I encrypt my files before uploading them to S3. 
+	+ Compliance Validation. 
+	+ Infra Security. 
+	+ Bucket Key: 
+		' When SSE-KMS. 
+		' When SSE-S3. 
+		' Generates a short-lived bucket-level key. 
+	+ Data Consistency: 
+		' Strongly Consistent: they will never return old data to me, but I must wait 2 seconds to get it. 
+		' Eventually Consistent: they will give me the data currently available immediately, and after 2 seconds it will generally be up to date. 
+		' As of Jan 2020, S3 offers strong consistency for all r,w,d operations. 
+
+* Object Replication: 
+	+ Cross-Region. 
+	+ Same-Region. 
+	+ Bi-Directional. 
+	+ Batch (on-demand). 
+
+* Versioning: 
+	+ Recover more easily from unintended accidental delete/overwrite and failures. 
+	+ States: 
+		- Unversioned. 
+		- Versioned. 
+		- (Versioning) Suspended. 
+
+* Transfer Acceleration: 
+	+ Fast & secure transfer of files over long distances to my customers (bucket-level). 
+	+ Using CloudFront's distributed Edge Locations. 
+	+ Distinct endpoint: https://s3-accelerate (.dualstack = for also IPv6). 
+	+ Only for virtual-hosted style requests. 
+	+ Bucket names = no dots (.). 
+
+* Presigned URLs: programmatically and temporarily provide access to upload/download objects (commonly private). 
+	+ $ aws s3 presign s3://bucket/object --expires-in <SECONDS> 
+
+* Object Lambda Access Points: allows me to transform the output of S3 requests to present data differently. 
+	+ HEAD, GET, LIST. 
+
+* Mountpoint for S3: 
+	+ Mount an S3 bucket to my local Linux fs for high-throughput. 
+	+ CAN: read, list, create new files. 
+	+ CANNOT: modify files, delete dirs, symlinks, file locking. 
+	+ Storage Classes: Standard, AI, One-Zone IA, RRS, Glacier Instant. 
+
+* Archived Objects: 
+	+ Rarely accessed, not in real-time. 
+	+ Archive Storage Classes: I manually move data. Glacier Flexible, Deep. 
+	+ Archive Acces Tiers: automatically. Intelligent-Tiering Archive access: minutes. Intelligent-Tiering Deep: 12+h. 
+
+* Requesters pay: 
+	+ I (owner) pay for storage. 
+	+ Requesters pay for download. 
+	+ Header: x-amz-request-payer. 
+
+* Batch Operations: 
+	+ Only for ClickOps. 
+	+ Billions of objects containing exabytes of data. 
+	+ Operations for each object: 
+		- Copy (to another bucket). 
+		- Invoke Lambda. 
+		- Replace tags. 
+		- Replace ACL. 
+		- Restore (from Glacier). 
+		- Lock retention. 
+		- Lock legal hold. 
+
+* Inventory: scheduled for audit history. 
+	- Daily or weekly. 
+	- I can specify metadata. 
+
+* S3 Event Notifications: allows a bucket to notify other services about S3 events. 
+
+* Storage Class Analysis: analyze access patterns and recommend objects to move between Standard and IA. 
+
+* Lens: storage analysis tool for buckets. 
+
+* Static Website Hosting: 
+	+ NO HTTPS! 
+	+ Or redirect requests to objects. 
+
+* Byte Range Fetching: to download parts of a file
+
+
 
 
 * CLI:
@@ -26,7 +259,6 @@ ____________________________________ S3 _______________________________________
 
 * Bash: 
 	+ Get jq: 							$ choco install jq 
-	+ To avoid "no such file or dir" I had to create the temp json file in current dir, instead of /tmp/. 
 
 * PowerShell: 
 	+ Install AWS CLI for PowerShell: 			$ Install-Module -Name AWS.Tools.Installer 
@@ -48,4 +280,664 @@ ____________________________________ S3 _______________________________________
 	+ Python: 
 		- pip install boto3
 
+	+ IaC: 
+		- CloudFormation (CFN). 
+			' S3: 
+				; The region of the bucket will be the same as the stack. To create a bucket in another region, specify it (--region) during the `aws cloudformation deploy` command. 
+				; To configure it so I have to manually accept the changeset use option: --no-execute-changeset. 
+				; To accept the changes on the Console: CloudFormation > Stacks > <STACK> > Change sets > <CHANGE_SET> > review the changes > Execute change set. 
+		- Terraform: Advantages: multi-cloud. 
+			' S3: the content of the files (objects) is not tracked. We can use etag argument for that use case. 
+		- CDK (Cloud Development Kit): programming language code to CloudFormation. 
+		- Pulumi. 
+
 ########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_____________________________________ API _____________________________________
+
+* An Application Programming Interface allows 2 apps/services to communicate. 
+* The most common type is HTTP(S) requests. 
+
+* CLI: processes commands to a computer program as lines of text. 
+* Terminal: text only interface. 
+* Console: physical computer to input into a terminal. 
+* Shell: command-line program to input commands. 
+
+* AWS Credentials: key and secret. 
+
+* Exponential Backoff: to try again in 2 sec, 4, 8, 16, 32 ...
+
+* STS (Security Token Service): temporary, limited-privilege credentials. 
+
+* When using API directly (HTTP) I must sign the request. 
+
+* Service Endpoints: to connect programmatically I use an endpoint. An endpoint is the URL of the entry point for a service. 
+	+ Gobal. 
+	+ Regional. 
+	+ FIPS. 
+	+ Dualstack. 
+
+########################################################
+
+
+
+
+
+
+
+_____________________________________ VPC _____________________________________
+
+* Virtual Private Cloud: logically isolated virtual network. 
+	+ Region specific. 
+	+ I can create 5 VPCs per region (or request more). 
+	+ Every region comes with a default VPC. 
+		- IPv4 CIDR block: 172.31.0.0/16 (~65,536). 
+		- A (public) subnet (/20) for each AZ (4,096). 
+		- IGW. 
+		- SG. 
+		- NACL. 
+		- DHCP. 
+		- A Route Table with a route out to the internet via IGW. 
+	+ Up to 200 subnets. 
+	+ 5 IPv4 CIDR blocks (adjustable to 50). 
+	+ 5 IPv6 CIDR blocks (adjustable to 50). 
+
+* Core components: 
+	+ IGW (Internet Gateway): out to the internet. 
+		- Allows inbound and outbound internet traffic to my VPC. 
+		- I need a route for IPv4 (0.0.0.0/0) and another for IPv6 (::/0). 
+		- Performs NAT for instances with public IPs. 
+	+ VPNGW (Virtual Private Gateway): to a private external netw. 
+	+ Route Tables. 
+		- Each subnet must be implicitly or explicitly associated with a SINGLE RT. 
+		- Multiple subnets can share the same RT. 
+		- MAIN RT: default. Cannot be deleted. 
+		- Target: local, IGW, VPG (to on-prem), NAT GW (IPv4 only), Egress-Only IGW, EC2 Instance, ENI, Carrier GW, Core Netw (to WAN), GW LB (for virtual appliances), Outpost Local GW, Peering Connection, TGW (Transit Hub). 
+	+ NAT GW: allows my private instances (VMs) to connect to services outside the VPC. 
+		- Per subnet. Costs. 
+		- Must associate EIP address. 
+		- Private connection mode: instances in private subnets to other VPCs or on-prem. 
+	+ NACLs (Netw Access Control Lists): stateless virtual firewall at subnet level. 
+		- Allow & deny rules. 
+	+ Security Groups (SG): stateful virtual firewall for compute within a VPC, instance level. 
+		- Associated with EC2 instances. 
+		- Allow rules only. 
+		- Up to 10,000 per region (default 2,500). 
+		- Rules: 60 outbound, 60 inbound. 
+		- 16 per ENI (default 5). 
+		- Always allowed: 
+			' Amazon DNS. 
+			' Amazon DHCP. 
+			' EC2 instance metadata. 
+			' Windows Licenses. 
+			' Amazon Time Sync service. 
+			' Reserved IPs by the default VPC route. 
+	+ Public subnets. 
+	+ Private subnets. 
+	+ VPC Endpoints: privately connect my VPC to AWS support services. 
+		- Types: 
+			` Interface. 
+			` GW. 
+			` GWLB. 
+	+ VPC Peering: to other VPCs.  
+		- Direct netw route with private IPs. 
+		- Accross accounts and regions. 
+		- Star configuration. 
+		- Won't work if overlapping CIDR blocks. 
+		- Data transfer accross AZs/Regions costs. 
+
+
+
+* Share VPCs (subnets) across accounts: 
+	+ Same region. 
+	+ With Resource Access Manager (RAM). 
+
+* Gateway (GW): 
+	+ Netw services that sits between 2 different networks. 
+	+ Often act as reverse proxies, FW, LB. 
+
+* EO-IGW: for IPv6 to prevent inbound traffic from the internet. 
+
+* Elastic IPs (EIP): static IPv4 address. 
+	+ Associated to Instance or primary network card. 
+
+* Direct Connect pricing factors: 
+	+ Capacity. 
+	+ Port hours. 
+	+ Data Transfer Out (DTO). 
+
+* Private Link (PrivateLink): to securely connect my VPC to: supported services, services hosted on other accounts, supported Marketplace partners (without the need of IGW, NAT, VPN, Direct Connect). 
+	+ Interface (ENI) endpoint -> Service endpoint (Netw LB). 
+		- Interface Endpoint: ENI with a private IP address. Cost money. 
+	+ Access SaaS privately. 
+	+ GWLB Endpoint: to distribute traffic to a fleet for netw virtual appliances. 
+
+* VPC Flow logs: capture IP traffic information. 
+	+ For VPC, subnets, netw if. 
+
+* AWS VPN: to establish a secure and private tunnel from my network or device to AWS global network. 
+	+ Site-To-Site: VPC to on-prem. 
+		- VGW (Virtual Private GW): VPN endpoint (Amazon side) attached to a single VPC. 
+			' Assign an ASN (Autonomous System Number). 
+		- Customer GW (CGW): 
+			' Configure my device: 
+				` IKE. 
+				` IPsec. 
+				` Tunnel Interface. 
+				` BGP. 
+		- Transit GW: for IPv6. 
+			' Virtual router at region level. 
+			' Attach up to 5,000 VPCs. An ENI provisioned for each. 
+			' Also for Direct Connect. 
+			' Also for third-party virtual appliances. 
+	+ Client VPN (laptop): to securely connect to RDS instance that is on a private subnet. 
+
+* NAT (Network Address Translation): mapping IP address space into another by modifying IP header of packets in transit accross traffic-routing device. 
+	- Instances: NAT in an EC2 for scaling. 
+
+* Bastion / Jumpbox: security hardened VM that provides secure access to private subnets. AWS alternative: Sessions Manager. 
+
+* VPC Lattice: to turn my AWS resources into services for a micro-service architecture. 
+	+ Service Network. 
+	+ Listener(s): up to 2. 
+	+ Target group: of specific type. 
+	+ Service Directory. 
+
+* Traffic Mirroring: sends a copy of the packet from src ENI to: target ENI, UDP-enabled NLB/GWLB. 
+	+ For security monitoring/analysis. 
+	+ Attaches additional VXLAN header. 
+	+ Src, target, filters. 
+
+* Route 53 Resolver DNS Firewall: protects agains DNS exfiltration. 
+
+* Network Firewall: stateful, managed, and IDS/IPS (Intrusion Detection/Protection) for VPC. 
+
+* Network Address Usage (NAU): metric. Default limit: 64,000. Quota increase: 256,000. 
+
+########################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+____________________________________ IAM ____________________________________
+
+* Manages access of AWS users and resources. 
+* Policies: 
+	+ AWS managed. 
+	+ Customer managed. 
+	+ In-line. 
+* Principal: account, user, role, federated user. 
+* Effect: allow/deny. 
+* Use root account to:
+	+ Change account settings. 
+	+ Close AWS account. 
+	+ Change/cancel support plan. 
+* Cross Account Role: sts:AssumeRole. 
+* Via web id provider: I send an OAuth 2.0 request to Facebook -> it responds with a Javascript Web Token -> aws CLI AssumeRoleWebIdentity -> STS -> I get temp creds. 
+* SSO: allows a user to login with a single ID/passw to different systems. 
+
+########################################################
+
+
+
+
+
+
+
+
+
+
+____________________________________ EC2 ____________________________________
+
+* Highly configurable virtual server with resizable compute capacity. Takes minutes to launch. 
+* Cloud-init: industry standard multi-distribution method for cross-platform cloud instance initialization. 
+	+ Cloud instances are init from a disk image and instance data: 
+		- Meta data: MDS (Metadata Service) special endpoint: 169.254.169.254 | fd00:ec2::254 
+			` Catergories. 
+			` Configuration: 
+				' Enforce use of tokens (use v2 of MDS). 
+			` $ curl http://169.254.169.254/latest/meta-data/ 
+		- User data: my script to run when instance boots up. 
+		- Vendor data. 
+
+* Instance Types: Family Generation Processor-Family Additional-Capabilities . Size 
+	+ Instance Family: combinations of CPU, Memory, Storage, Netw capacity. 		// M (General Purpose): even balance. T (Burstable perf): cheapest. Variable workloads. 
+		' General Purpose: 
+			` A1, T2, T3, T3a, T4g, M4, M5, M5a, M5n, M6zn, M6g, Mgi, Mac. 
+			` Web servers, code repos. 
+		' Compute Optimized: 
+			` C5, C4, Cba, C5n, C6g, C6gn. 
+			` Scientific modeling, dedicated gaming servers, ad server engines. 
+		' Memory Optimized: 
+			` R4, R5, R5a, R5b, R5n, X1, X1e, High Memory, z1d. 
+			` In-memory caches, in-mem DBs, real time big data analytics. 
+		' Accelerated Optimized: 
+			` P2, P3, P4, G3, G4ad, G4dn, F1, Inf1, VT1. 
+			` Machine Learning, computational finance, seismic analysis, speech recognition. 
+		' Storage Optimized: 
+			` I3, I3en, D2, D3, D3en, H1. 
+			` NoSQL, In-mem transactional DBs, Data Warehousing. 
+
+* Processors: 
+	+ Intel Xeon. 
+	+ AMD EPYC. 
+	+ NVIDIA GPUs. 
+	+ AWS Graviton: ARM arch. 
+	+ Intel Habana Gaudi: ML. 
+	+ Intel FPGAs: HW accel. 
+	+ AMD Xilinx. 
+	+ AWS Inferentia. 
+	+ Trainium. 
+
+* Sizes: generally double in price and key attributes. 
+
+* Profile: reference to IAM role assumed by the instance. 
+
+* Lifecycle: 
+	+ Actions: 
+		- Launch: create and start. 
+		- Stop: turn off. 
+		- Start: turn on. 
+		- Terminate: delete. 
+		- Reboot: soft. 
+		- Retire: notify is scheduled for retirement. 
+		- Recover: a failed instance on new HW. 
+	+ States: 
+		- Pending: preparing to enter running state. 
+		- Running: ready for use. 
+		- Stopping. 
+		- Stopped: shut down. 
+		- Shutting-down. 
+		- Terminated. 
+
+* Instance Console Screenshot: of the current state. 
+
+* Default user: ssmuser					$ sudo su - ec2-user 
+
+* Burstable Instances (T family): 
+	+ Allow workloads to handle bursts of higher CPU usage for very short durations. 
+	+ T4g: Gravitron (ARM). 
+	+ T3a: AMD EPYC. 
+	+ T3: Intel Xeon Scalable. 
+	+ T2: Intel Xeon. Free tier. 
+	+ Modes: 
+		- Standard: using accumulated CPU credits. 
+		- Unlimited: additional charges. 
+
+* System Log: directly on the Console. 
+
+* Placement Groups: choose the logical placement to optimize for: communication, performance, durability. 
+	+ Free. 
+	+ Cluster: AZ. For HPC (High-Performance Computing). 
+	+ Partition: rack per partition. For Hadoop. 
+	+ Spread: each instance in a different rack. Max 7. 
+
+* EC2 Connect: 
+	+ SSH. 
+	+ EC2 Instance Connect: short-lived SSH keys controlled by IAM. 
+	+ Sessions Manager. 
+	+ Fleet Manager Remote Desktop: Windows RDP. 
+	+ Serial console: underlying HW. 
+
+* Amazon Linux: based off CentOs. 
+
+* AMI (Amazon Machine Image): provides the info required to launch an instance. 
+	+ Region specific. 
+	+ I can also turn my instance into an AMI. 
+	+ Template for root volume: 
+		- EBS Snapshot. 
+		- Instance Store template. 
+	+ Launch permissions. 
+	+ A block device mapping. 
+	+ ENA (Elastic Netw Adapter): 100 Gbps. 
+	+ Root Device Type: 
+		- EBS-backed: storage is independent of the instance. 
+		- Store-backed: native volumes. 			// All data lost when instance is stopped/terminated. 
+	+ Create AMI: $ aws ec2 create-image 
+		- Running or stopped. 
+		- I can copy an AMI to another region. 
+	+ Store & Restore: storing (or restoring from) an AMI in an S3 bucket, to copy from one partition to another. 
+		- $ aws ec2 create-instance-export-task 
+		- $ aws ec2 import-image 
+	+ Deregister. 
+	+ Deprecate. 
+	+ Disable. 
+	+ Share: public, explicit, implicit. 
+	+ Can be sold in Marketplace. 
+	+ Virtualization types: 
+		- HVM (Hardware VM): preferred. 
+		- PV (Paravirtualization). 
+
+* ASG (Auto Scaling Groups): contains a collection of EC2 instances treated as a group for automatic (horizontal) scaling and management. 
+	+ Automatic scaling: 
+		- Capacity settings: manual. Min, Max, Desired.  
+		- Health Check Replacements: checks: EC2, ELB. 
+			' An ELB (Elastic Load Balancer) can be attached to the ASG indirectly via Target Groups. 
+		- Dynamic Scaling Policies: how much ASG should change capacity, triggered by Cloud Watch Alarms. 
+			' Simple: by a certain ammount. Not recommended. 
+			' Step: by a certain ammount at different thresholds (steps) when the alarm is repeatedly triggered. 
+			' Target Tracking: automatically scales the capacity based on a target metric value. 
+				` Metrics: AvgCPU, AvgNetwIn/Out, ALBRequestCountPerTarget, Custom. 
+				` Will create 2 CloudWatch alarms. 
+			' Predictive: triggers scaling by analyzing historical load data to detect daily or weekly patterns in traffic flows. 
+				` Requires 24h CloudWatch data. 
+			' Adjustment types for Simple and Step: ChangeInCapacity, ExactCapacity, PercentChangeInCapacity. 
+	+ Works with ECS and EKS. 
+	+ Fargate DOES NOT USE ASG.  
+
+########################################################
+
+
+* ELB (Elastic Load Balancer): 
+	+ Load Balancer: accepts incoming traffic and then ditributes it to mutiple targets. Balance the load via rules. 
+	+ ELB: suite of LBs for EC2, ECS, Fargate, EKS instances. 
+	+ ALB (Application): OSI layer 7 (HTTP(S)). Can only be accessed via hostname. Use cases: microservices, containerized apps, e-commerce, retail websites, corporate websites, web apps, SaaS apps. 
+	+ NLB (Network): OSI layer 3/4 TCP/UDT. Can handle millions of requests per second. Use cases: high-perf computing, Big Data apps, real-time & multiplayer gaming platforms, IoT, telecommunicayion networks. 
+	+ GWLB (Gatway): to virtual appliances. 
+	+ CLB (Classic): OSI layer 7, 3/4. No recommended. 
+	+ Rules: Listeners > Rules (ALB only) > Target Groups. 
+	
+
+* Route 53: 
+	+ DNS (Domain Name Service). 
+	+ Register and manage domains. 
+	+ Hosted Zones: container for record sets, scoped to route traffic for a domain or subdomains. 
+		- Public: inbound traffic from the Internet. 
+		- Private: within a VPC. 
+	+ Record sets: always changed in batch via API. 
+		- Alias Target can point to: CloudFront, Elastic Beanstalk, ELB, S3 website endpoint, resource record set (www.example.com), VPC endpoint, APIGW endpoint custom regional API. 
+	+ Traffic Flow: visual editor. 
+	+ Routing policies: 
+		- Simple: 1 record -> multiple IPs (random order). 
+		- Weighted: split traffic. 
+		- Latency-based: lowest netw latency based on region. 
+		- Failover: active/passive setups (PRIMARY/SECONDARY). 
+		- Geolocation: customer. 
+		- Geo-proximity: resources. Must use Traffic Flow tool. 
+		- Multi-value Answer: automatic health checks. 
+	+ Health checks: every 30 seconds (can be reduced to 10s). 
+	+ Resolver: DNS server that allows me to resolve DNS queries between on-prem and VPC. 
+	+ DNSSEC (Domain Name Service Security Extensions): suite of specifications by the IETF for securing data exchange in DNS in IP networks. 
+		- Recommended to prevent other to impersonate my domain. 
+		- Signing. 
+	+ Zonal Shift: capability in Route 53 App Recovery Controller (ARC) to shift a LB away from a failed AZ to a healthy one in a single action. 
+	+ Profiles: across VPCs and accounts. 
+
+
+* Global Accelerator: to find the optimal path from the end user to my web-server. 
+	+ Deployed within Edge Locations. 
+	+ Types: 
+		' Standard. 
+		' Custom Routing: to specific EC2 instances. 
+
+
+* CloudFront: 
+	+ CDN (Content Delivery Netw): distributed netw of servers that delivers web pages and content to users based on their geo location, the origin of the web page, and the server. 
+	+ CloudFront delivers: 
+		' Static content. 
+		' Dynamic content. 
+		' Streaming videos. 
+		' Web sockets. 
+	+ Components: 
+		' Origin. 
+		' Regional caches. 
+		' Distribution. 
+		' Edge Locations. 
+	+ Lambda@Edge: 
+		' Viewer request. 
+		' Origin request. 
+		' Origin response. 
+		' Viewer response. 
+	+ Functions: lightweight edge functions. Cheaper, faster, but more limited. 
+		' Viewer request. 
+		' Viewer response. 
+	+ Origin: the source where CloudFront will send requests. 
+		' Domain name. 
+		' Path. 
+
+
+
+* EBS (Elastic Block Storage): highly available and durable solution for attaching persistent block storage volumes to an EC2 instance. 
+	+ IOPS (I/O per second): speed at which non-contiguous reads and writes and be performed on a storage medium. 
+	+ Throuput: data transfer rate to & from the storage medium in MB per second. 
+	+ Bandwidth: measurement of total possible speed of data movement along the netw. 
+	+ Automatically replicated within their AZ. 
+	+ Types: 
+		' General Purpose SSD (gp2). 
+		' gp3: 20% lower cost. Max: 16K IOPS. 
+		' Provisioned IOPS SSD (io1): fast. Perf: >16k IOPS. Size: 4GiB - 16 TiB. Max: 64k IOPS. 
+		' io2 Block Expresss: higher throughput, IOPS and storage. Perf: > 64k | 1k MiB/s. Size: 4GiB - 64 TiB. Max: 256k IOPS. 
+		' Cold HDD (sc1): infrequent access. 
+		' Throughput Optimized HDD (st1): magnetic drive quick throughput. 
+		' Magnetic (standard): previous generation HDD. 
+	+ HDD RAID (Redundant Array of Independent Disks): virtual data storage to improve fault tolerance. 
+		' RAID 0 (Striping): no redundancy. 
+		' RAID 1 (Mirroring): data is duplicated. 
+		' RAID 5 (Parity): at least 3 disks. 
+		' RAID 6 (Double): survives failure of 2 disks. 
+		' RAID 10: 1+0. 
+	+ SSD (Solid State Drive): integrated circuit assemblies using flash memory. 
+		' Types: SATA, NVMe, M.2, U.2, Portable, PCIe. 
+
+
+
+* EFS (Elastic File System): file storage service for EC2 instances. 
+	+ Storage capacity grows up to PB and shrinks automatically based on data stored. 
+	+ Multiple EC2 instances in the same VPC can mount a single EFS volume. 
+	+ Uses Netw File System version 4 protocol. 
+	+ Created multiple mount targets in all subnets. 
+
+
+* FSx: to deploy scale feature-rich, high-performance FSs in the cloud. 
+	+ NetApp ONTAP. 
+	+ OpenZFS. 
+	+ WFS (Windows File Server). 
+	+ Lustre. 
+	+ File Cache: temporary high-perf storage location. 
+
+
+* Backup: centrally manage backups accross AWS services. 
+	+ Plan (or on-demand). 
+	+ Vault. 
+	+ Incremental. 
+	+ Immutable. 
+
+
+
+* Snow Family: storage (and compute) devices used to physically move data in/out of the cloud. 
+	+ Delivered to S3. 
+	+ Snowcone: portable, rugged. 
+		' Physically shipping | DatSync. 
+		' 8TB (HDD). 
+		' 14 TB (SSD). 
+	+ Snowball Edge: more local processing, edge-computing workloads, config options. 
+		' LCD display. 
+		' Can cluster 3 - 16 nodes. 
+		' Config options: 
+			` Storage-optimized (data transfer): 80TB. 
+			` Storage-optimized: 210TB. 
+			` Storage-optimized EC2-compatible compute: 80TB, 40 vCPUs, 80 GB RAM. 
+			` Compute optimized: 28 TB NVMe SSD, 104 vCPUs, 416GB RAM. 
+			` Compute optimized with GPU: equivalent to P3. 
+	+ Snowmobile: 100 PB. 
+
+
+
+* Transfer: managed transfer of files over FTP, SFTP, FTPS, AS2. 
+
+* Migration Hub: single place to discover my existing servers, plan migrations, track status.
+	+ Monitor status of: 
+		- AMS (Application Migration Service). 
+		- DMS (Database Migration Service): quickly & securely migrate a DB to another. Example: on-prem to AWS. 
+			' AWS Schema Conversion: automatically converts src DB schema to target DB schema. 
+			' AWS Schema TOOL: desktop app. 
+			' Each migration path requires research as NOT all combinations of src/target are possible. 
+			' Migration methods: homogenous, instance replication, serverless. 
+	+ Discovery Agent. 
+	+ Migration Evaluator Collector: submit request to AWS to assess a migration. 
+	+ Refactor: bridges networking accross AWS accounts so legacy and new services can communicate. 
+	+ Journey: guided templates for end-to-end migrations. 
+
+* Data Sync: data transfer service for data migration to/from/between Cloud Storage services. 
+	+ Protocols: NFS, SMB, HDFS, Object Storage. 
+	+ AWS: S3, EFS, FSx, Snowcone, S3-Compatible Snowball Edge. 
+	+ External: Google Cloud Storage, Azure Blob Storage & Files, OCI Object Storage, IBM Cloud Object Storage. 
+
+
+* Auto Scaling: service that discovers scaling resources in my account to add scaling plans. 
+	+ Can manage and make recommendations for: EC2, ECS, Aurora, DynamoDB, Spot Fleet. 
+	+ Apply SCALING: Dynamic | Predictive. 
+
+* Amplify: JS framework and managed infra to develop web/mobile apps. 
+	+ Components: CLI, SDK, UI, Hosting, Studio. 
+
+* App Flow: managed integration service for data transfer between data sources. 
+	+ Flow triggers: RUN on: demand, event, schedule. 
+
+* App Sync: fully managed GraphQL service. 
+	+ Data Model, Data Sources, Resolvers. 
+	+ API types: GraphQL, Merged. 
+	+ Data sources: DynamoDB Table, OpenSearch, etc. 
+	+ Caching: none, full request, per-resolver. 
+	+ GraphQL: open-source agnostic query adaptor to query data from different data sources. 
+
+* AWS Batch: plans, schedules, executes batch computing workloads. 
+	+ Jobs, definitions, queues, scheduler (FIFO default). 
+	+ Runs on: EC2, Fargate, EKS. 
+
+* OpenSearch Service: full-text search service to deploy, operate, scale OpenSearch. 
+	+ Engines: 
+		- OpenSearch: AWS's fork. 
+		- ElasticSearch: based on Lucene library. ELK stack: ElasticSearch, Logstash, Kibana. 
+
+* Device Farm: to test my app in different environments like Mobile Device and Desktop Browser. 
+
+* Amazon Quantum Ledger Database (QLDB): fully managed ledger DB for transparent, immutable, cryptographically variable transaction logs. 
+	+ Immutable logs. 
+	+ Crytographic verification. 
+	+ Serverless. 
+	+ SQL-like queries. 
+	+ Central Governance. 
+	+ High Throuput and scalability. 
+	+ ACID transactions: atomic, consistent, isolated, durable. 
+	+ Journal storage. 
+
+* Elastic Transcoder: LEGACY fully managed video transcoding service for Video on Demand (VOD) or streaming. 
+* Media Convert: fully managed video transcoding service to convert videos from one format to another for VOD or streaming AND applying additional processing options. 
+
+
+
+
+
+
+
+
+
+
+
+____________________________________ SNS ____________________________________ 
+
+* Simple Notification Service: fully managed, HA, durable, secure publishers/subscriptions service to decouple microservices, distributed systems, and serverless apps. 
+	+ SNS Topic: logical access point for communication. 
+	+ Pub/Sub: pattern where sender of messages to an event bus that categorizes them into groups. The receivers of messages subscribe to these groups. Messages/events are automatically and immediately pushed to subs. 
+
+* Sources: AWS services: topics standard. 
+
+* Destinations: 
+	+ A2A (Application-to-App): Data firehose, Lambas, SQS, HTTP(S) endpoint, AWS Even Fork Pipeline. 
+	+ A2P (App-to-Person): mobile apps, SMS (text messaging), email address, AWS Chatbot, PagerDuty. 
+
+* Topics: 
+	+ To group multiple subs together. 
+	+ To deliver to multiple protocols at once. 
+	+ Automatically format message according sub's protocol. 
+	+ Can be encrypted via KMS. 
+	+ Types: 
+		' Standard. 
+		' FIFO: guarantees message order. 
+
+* Messages: 
+	+ Large messages: larger than 256KB, max 2GB. Must use Extended Client Lib. Saves the payload to S3 bucket. 
+	+ Attributes: to provide structured metadata. 
+	+ Batch Publishing: up to 10 at a time. 
+
+* Subscriptions: 
+	+ One proto & one topic. 
+	+ Protos: HTTP(S), emaill (plain text), email-JSON, SQS, Lambda (triggers a function), SMS, Platform App endpoint. 
+
+* Filter Policy: to filter a subset of messages only to be delivered. 
+
+* Message Data Protection: safeguards data published to SNS topics by using policies to audit, mask, redact, block sensitive info. 
+
+* Delivery Policy: how retries work when server-side errors. 
+	+ Custom only for HTTP(S). 
+
+* App as Subscriber: send push notification messages directly to apps on mobile devices. 
+
+########################################################
+
+
+
+
+
+
+
+
+
+____________________________________ SQS ____________________________________ 
+
+* Messaging system: to provide async communication via messages/events from sender to a receiver. 
+* Queueing system: messaging system that generally deletes messages once they're consumed. 
+	+ Simple communication. 
+	+ Not real-time. 
+	+ Have to pull. 
+	+ Not reactive. 
+
+* Simple Queueing Service: fully managed queueing service. Use case: transactin emails to signup, reset password. 
+
+* Types: 
+	+ Standard: nearly unlimited number of transactions per second (tps). 
+	+ FIFO: guarantees order of messages when being consumed. No duplicates. Consumer must specify a Message Group ID. 
+
+* Size: 1 bye - 256 KiB. 
+
+* Retention: 
+	+ Default: 4 days. 
+	+ Adjustable: 60s - 14d. 
+
+* Encryption: SSE | KMS. 
+
+########################################################
+
+
+

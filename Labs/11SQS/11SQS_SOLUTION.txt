@@ -1,0 +1,27 @@
+__________________ Challenge __________________
+
+Using Python SDK: 
+	Create a Standard Queue (SQS). 
+	Send some messages. 
+	Recieve the messages. 
+	Delete the messages (after receiving them). 
+
+	Create a FIFO Queue (SQS). 
+	Send some messages. 
+	Recieve the messages. 
+	Delete the messages (after receiving them). 
+
+What is the difference between them?
+
+
+_ Solution _ 
+
+* Files: main.py. 
+
+* The differences are that: 
+	+ Standard:
+		- Queue ocassionally seems empty. 
+		- Messages arrive in random order. 
+	+ FIFO: 
+		- If there is at least one message, we always recieve it. 
+		- Messages alwas arrive in order. 
