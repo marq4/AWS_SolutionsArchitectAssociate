@@ -3,12 +3,12 @@ __________________ Challenge __________________
 Using Python SDK: 
 	Create a Standard Queue (SQS). 
 	Send some messages. 
-	Recieve the messages. 
+	Receieve the messages. 
 	Delete the messages (after receiving them). 
 
 	Create a FIFO Queue (SQS). 
 	Send some messages. 
-	Recieve the messages. 
+	Receieve the messages. 
 	Delete the messages (after receiving them). 
 
 What is the difference between them?
@@ -23,5 +23,5 @@ _ Solution _
 		- Queue ocassionally seems empty. 
 		- Messages arrive in random order. 
 	+ FIFO: 
-		- If there is at least one message, we always recieve it. 
+		- If there is at least one message, we always receieve it. 
 		- Messages alwas arrive in order. 
