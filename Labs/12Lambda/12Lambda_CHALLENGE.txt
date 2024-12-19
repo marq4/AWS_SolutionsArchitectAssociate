@@ -1,0 +1,9 @@
+__________________ Challenge __________________ 
+
+* Using Terraform: 
+	+ Create an AWS Lambda function that: 
+		- Greets the user: "Welcome to the club, <TITLE>." 
+		- Where TITLE is appropiate for user's gender. 
+		- If user is 21 or older (but not too old). 
+		- Bundle the code in a Docker image. 
+

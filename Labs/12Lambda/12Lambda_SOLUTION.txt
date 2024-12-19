@@ -1,0 +1,24 @@
+__________________ Challenge __________________ 
+
+Using Terraform: 
+	Create an AWS Lambda function that: 
+		Greets the user: "Welcome to the club, <TITLE>." 
+		Where TITLE is appropiate for user's gender. 
+		If user is 21 or older (but not too old). 
+		Bundle the code in a Docker image. 
+
+
+_ Solution _ 
+
+* Files: terraform.tf, ecr_repo.tf, containerized_lambda.tf. 
+* Only managing the ECR repo with Terraform. 
+* Building and uploading the Docker image manually: 
+	$ docker build -t lambda-python . 
+	$ docker run -d -p 9000:8080 lambda-python:latest 
+	$ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"payload": "hello"}' 
+	$ docker stop e
+	$ # Got get-login-password and docker login commands from ECR > Private repositories > lambdas-repo > View push commands. 
+	$ # Tagged and pushed using commands from there. 
+* Referencing the image URI in the tf. 
+* Deleted images in repo manually. 
+* $ terraform destroy 
