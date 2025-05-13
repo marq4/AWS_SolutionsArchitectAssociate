@@ -1,0 +1,1442 @@
+* Service. Enhance: 
+	+ Security: 
+	+ Resiliency: 
+	+ Perf: 
+	+ Cost: 
+
+
+
+
+_________________ Networking _________________ 
+
+* VPC / VPC Peering: 
+	+ Security: 
+		- Ensure customer data is stored within the respective region for compliance: Deploy app in multiple VPCs, each in a region close to the target customer base + Route53. 
+		- Subsidiaries must have isolated envs and communicate with each other: Separate VPCs in respective regions + VPC Peering. 
+		- Best practices but also min setup time: Default VPC, modify SGs & NACLs -> least privilege. 
+		- 3 VPS: DEV <-> UAT <-> PROD. Non-overlapping CIDR blocks. Company wants to push code releases from DEV to PROD: Create a new VPC Peering connection between PROD & DEV with appropriate routes. 	// In other words: NO, transitive peering is NOT supported. 
+	+ Resiliency: 
+		- Multi-VPC architecture, a couple of departments and a SHARED VPC: VPC Peering. 
+		- HA, fault tolerance: Deploy app accross multiple AZs within VPC, with each having own set of public & private subnets. 
+	+ Perf: 
+	+ Cost: 
+
+* Subnets: 
+	+ Security: 
+		- Segregate app & DB layers: Deploy app in public subnet, DB in private subnet. Apply appropriate SGs & NACLs to each subnet. 
+		- Web, App, DB Tiers. Web: internet access. App & DB: isolated from internet: Place Web tier in public subnet, App & DB in private subnets. Configure necessary RTs & NACLs for traffic. 
+	+ Resiliency: Subnet design for highest reliability: Distribute resources accross multiple AZs in separate subnets. 
+	+ Perf: 
+	+ Cost: 
+
+* Routing: 
+	+ Security: Ensure Web, App, DB tiers can communicate with each other, but restrict direct internet access to DB tier: Configure separate RTs for each subnet. Only Web tier has a routr to the IGW. 
+	+ Resiliency: Multi-tier web app (web, app, DB) each in separate subnets. Ensure each tier can communicate with the others as needed, BUT DB no internet access: Configure separate RTs for each subnet, with only necessary routes between tiers, only web tier has a route -> IGW. 
+	+ Perf: 
+	+ Cost: 
+
+* IGW: 
+	+ Security: Devs need access for testing over the internet: Attach IGW to the VPC, configure SGs & NACLs to allow access only from the developer's IPs. 
+	+ Resiliency: App will be used by devs for testing over internet. Ensure it is not publicly accessible: Attach IGW to VPC. Configure SGs & NACLs to allow only dev's IP addresses. 
+	+ Perf: 
+	+ Cost: 
+
+* NAT GW: 
+	+ Security: 
+		- App in private subnet needs to fetch data from public APIs on the internet, but should not be directly accessible from the internet: Deploy NAT GW in public subnet, update RTs of private subnet to direct internet-bound traffic to NAT GW. 
+		- EC2 instance needs to download patches from the internet only: NAT GW. 
+	+ Resiliency: App will run on EC2 instances in multiple AZs behind an ALB. Allow outbound internet access: Set up individual NAT GWs in each AZ to manage outbound traffic. 
+	+ Perf: 
+	+ Cost: 
+
+* Egress-Only GW: 
+	+ Security: IPv6 app needs to download external datasets, but not be accessible from internet: Deploy Egress-Only IGW in VPC, configure RTs to direct IPv6 traffic from app through it. 
+	+ Resiliency: IPv6-enabled app requires outbound internet connectivity but should not be directly accessible from internet: Egress-Only IGW for outbound IPv6 traffic. 
+	+ Perf: 
+	+ Cost: 
+
+* DNS: 
+	+ Security: EC2 instances across subnets need to communicate with each other using private DNS hostnames: Enable DNS resolution & hostnames in VPC and use Amazon-provided DNS server for resolving local DNS queries. 
+	+ Perf: 
+	+ Cost: 
+
+* Elastic IP (EIP) / Elastic Network Adapter (ENA) / Elastic Fabric Adapter (EFA) : 
+	+ Security: 
+		- Ensure EC2 app remains accessible to internet customers even after instance restart: Allocate EIP address and associate with EC2 instance, ensure SGs configured to allow only necessary inbound traffic. 
+		- Gaming, high-perf, multiplayer backend on EC2 instance. High throughput, low latency, real-time data processing & communication: Attach ENA to EC2 instance. Configure SGs & NACLs. 
+		- HPC. Extremely low netw latency, high throughput for EC2 instances communication in a placement group. Netw traffic must be isolated: Attach an EFA to instances. Configure SGs to allow only necessary traffic between instances in the placement group. 
+	+ Resiliency: 
+		- Ensure optimal netw reliability, flexibility for future scalability. Regarding IP addressing: Choose IPv4 CIDR blocks for the VPC and subnets from IPAM (Amazon VPC IP Address Manager for enhanced management. 
+		- Compute-intensive workloads on EC2. High throughput, low-latency connectivity. Choose the netw If option that provides resilience against interface failure: ENI + Placement Groups. 
+		- High-perf multiplayer game backend. High throughput, low-latency connectivity for real-time data processing. Ensure netw perf consistency & reliability: Attach ENA to EC2 instance and configure SGs & NACLs to manage traffic and maintain Reliability. 
+		- HPC complex simulations and modeling. Extremely low netw latency, high throughput communication between EC2 instances in a placement group. Enure netw traffic is secure & isolated: Attach a EFA to instances and configure SGs to allow only necessary traffic between instances. 
+	+ Perf: 
+	+ Cost: 
+
+* NACLs:
+	+ Security: 
+		- Web servers in public subnet. DB servers in private subnet. Ensure DB are not accessible from internet, but allow specific traffic from web servers: Configure NACLs for private subnet to allow inbound traffic from the IP address range of the web servers + allow necessary outbound traffic to the web servers. 
+		- We've identified IPs attempting unauthorized access to app. Ensure all traffic from these IPs is denied to app's subnet: Configure NACL associated with private subnet to DENY those IPs. Place the rule ABOVE any allow rules. 
+		- EC2 instances in a public subnet communicate with external services. Ensure instances can initiate outbound connections but restrict all unsolicited traffic from internet: Configure NACL to allow all outbound traffic and allow inbound traffic only from ephemeral port range (linux: 1024-65535). 
+	+ Perf: 
+	+ Cost: 
+
+* SGs: 
+	+ Security: 
+		- Backend EC2 instances need to communicate with DB & cache layer within the same VPC. Ensure instances can freely communicate with each other. Restrict all inbound traffic from outside the VPC: Create a custom SG for the instances. Configure it to allow all inbound & outbound traffic within the VPC. 
+		- App is deployed accross EC2 instances in a VPC. Layers: Web, App, DB. Each in its own subnet. Ensure each can ONLY communicate with adjacent layer: Web <-> App <-> DB: Create a separate SG for each layer. Configure rules to allow traffic ONLY from the SG of adjacent layer. 
+	+ Perf: 
+	+ Cost: 
+
+* ALB: 
+	+ Security: 
+		- Ensure data transmitted between clients and App is secure, using an ALB to handle SSL/TLS termination: Deploy ALB, enable TLS termination, use ACM (Cerf Manager) cert for secure communication between clients and ALB. 
+		- LB that supports host-based routing and SSL termination: ALB. 
+	+ Resiliency: App runs on EC2 instances accross multiple AZs. Distribute incoming traffic reliably: Implement ALB with cross-zone LB + Configure DNS failover routing between Route 53 Health Checks. 
+	+ Perf: 
+	+ Cost: 
+
+* NLB: 
+	+ Security: Real-time multiplayer game requires low latency & high-perf netw. Ensure ONLY legitimate game traffic is distributed evenly among instances. Ensure ONLY specific UDP port reaches backend servers: Assign SG to NLB: allow only traffic on specific UDP port for gaming. NACL: allow all traffic. 
+	+ Resiliency: UDP-based real-time app requires HA. Will run on EC2 instances accross multiple subnets. Load Balance incoming user traffic reliably: Set up NLB per AZ + Configure internal NLB with zone redudancy. 
+	+ Perf: 
+	+ Cost:
+
+* GWLB: 
+	+ Security: Company is deploying virtual appliances to inspect & filter traffic to their apps. GWLB will uniformly manage & scale deployment of these appliances accross org: Implement GWLB, config routing & target groups mapping app components & dependencies, secure configs using IAM policies. 
+	+ Resiliency: 
+		- How does GWLB adapt as instances scale: By integrating with ASG. 
+		- Handle sudden spikes in traffic to EC2 instances: Configure Dynamic Scaling Policies (ASG). 
+		- Detect unhealthy instances: Configure GWLB Health Checks. 
+		- What provides metrics: CloudWatch. 
+		- GWLB must remain available even if AZ fails: Enable cross-zone LB. 
+	+ Perf: 
+	+ Cost: 
+ 
+* VPN: 
+	+ Security: 
+		- Sensitive data stored on-prem. Ensure data is secure in-transit during reliable connection to AWS: Establish Site-to-Site VPN connection with dynamic routing (BGP), enable enc. 
+		- Connect on-prem netw to VPC, private connection over the internet: VPN Site-to-Site. 
+	+ Resiliency: App will run across multiple AZs. Set up a hybrid connection between VPC <-> on-prem netw. Ensure High Redundancy: Transit GW with dual VPN connections + CloudHub Router with redundant VPN tunnels. 
+	+ Perf: 
+	+ Cost: 
+
+* Direct Connect (DX): 
+	+ Security: 
+		- Ensure connection is reliable, consistent, and secure between on-prem and AWS: Establish Direct Connect AND implement VPN. 
+		- Dedicated and private connection: Direct Connect. 
+	+ Resiliency: High-bandwidth, low-latency hybrid connection between HQ <-> AWS. Ensure redundancy: 2 DX connections to different DCs + IPsec VPN over DX. 
+	+ Perf: 
+	+ Cost: 
+
+* Transit GW: 
+	+ Security: Multiple VPCs and on-prem. Ensure data traversing through Transit GW is secure: Establish Transit GW & implement SGs & NACLs in each VPC to control traffic. 
+	+ Resiliency: Multi-VPC architecture, each department BUT also a shared VPC: Transit GW connect all departmental VPCs with shared, enabling centralized management and routing. 
+	+ Perf: 
+	+ Cost: 
+
+* Private Link / Endpoints: 
+	+ Security: 
+		- Microservices App in a VPC needs to communicate with external API for fetching data. Ensure route to API is secure: Configure VPC route to direct traffic to the external API through a VPC Endpoint, ensuring traffic doesn't traverse the public internet. 		// Assume that external API is hosted on AWS. 
+		- App needs access to Secrets Manager. Ensure data retrieved is not exposed to the public internet: Create a VPC Interface Endpoint for Secrets Manager and associate it with a SG that restricts access to only the necessary IPs/ports. 
+	+ Perf: 
+	+ Cost: 
+
+* CloudFront / CloudFront Functions / Lambda@Edge: 
+	+ Security: 
+		- Company collects credit card numbers. Ensure data is enc at the field level as it travels from user to origin server: Implement field-level enc by specifying the fields to be encrypted in the CloudFront distribution & use customer-managed CML in KMS for enc. 
+		- Lightweight, serverless functions to manipulate HTTP req/response @ edge locations: Ensure CloudFront functions follow principle of least privilege by only allowing necessary permissions and secure handling sensitive data. 
+		- Lamdba@Edge: Implement functions & ensure they follow principle of least privilege by only allowing necessary IAM permissions & securely handling sensitive data. 
+		- Run custom authN @ edge locations: Lambda@Edge. 
+	+ Resiliency: 
+		- Deliver web content globally with low latency. Serve it redundantly: CloudFront Distribution with multiple Edge Locations. 
+		- Perform dynamic content optimization through CloudFront. Implement in scalable way: Lambda@Edge Functions triggered on CloudFront requests. 
+		- Perform user authN on client-side web app through CloudFront. Implement in scalable way: Lambda@Edge Functions triggered on CloudFront requests. 
+	+ Perf: 
+	+ Cost: 
+
+* Route 53 / ARC (App Recovery Controller): 
+	+ Security: 
+		- Route 53: Restrict access to DNS records by utilizing IAM policies & enable DNSSEC to validate authenticity of DNS responses. 
+		- ARC: Configure recovery readiness checks & recovery groups, ensure app components & dependencies are accurately mapped & secured using IAM policies. 
+	+ Resiliency: 
+		- Multi-AZ app. Configure DNS to route traffic to Standby Site if Primary Site becomes unavailable. What Route 53 capability should be leveraged: Failover Routing. 
+		- Multi-region app. Primary Site & Secondary DR Site. Implement automated failover routing solution: Set up Route 53 Health Checks on Primary & DR Site endpoints + Configure Route 53 Failover Routing between Primary & DR Sites. f
+	+ Perf: 
+	+ Cost: 
+
+
+
++ Perf: 
+	- Decrease latency for international customers (CDN): CloudFront. 
+	- Global app DNS routing to lowest latency endpoint: Latency routing. 
+	- DNS routing to endpoint based on geographic location: Geolocation routing policy. 
+	- CloudFront global, lightweight functions for requests/responses @ edge: CloudFront Functions. 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ Storage _________________ 
+
+* S3: 
+	+ Security: 
+		- R/W permissions to user on specific objects: ACLs. 
+		- Grant temp access to external customer to object: Presigned URLs. 
+		- Enforce all objects uploaded to be enc at rest: Bucket Policy (deny non-enc uploads). 
+		- Store user image files securely, accessible only by authorized personnel, can be retrieved quickly by app: Store them in a private bucket, enable SSE, use pre-signed URLs for temp access. 
+		- Order in which permissions are evaluated: Public Access Firewall > IAM Policies > Bucket Policies > ACLs. 
+		- Monitor & analyze access patterns. Enable logging for all requests to S3 bucket. Ensure logs stored securely: Enable S3 Server Access Logging for bucket, specify another private bucket to store the access logs. 
+		- Ensure certain data is retained and cannot be deleted or modified for a fixed period, while other data needs to be protected but still allow for certain exceptions under specific conditions: Use Compliance mode for data that needs to be retained and cannot be deleted/modified. Use Governance mode for data that requieres protection but allows for exceptions. 
+		- Ensure data cannot be deleted/modified for specified retention period, even by users with full permissions: Enable S3 Object Lock with retention period. Choose Governance | Compliance mode based on needs. 
+		- Ensure EC2 instances can access S3 bucket securely & directly (no public internet): Create S3 VPC Endpoint. Add necessary route to VPC's RT to direct S3 traffic to the endpoint. 
+		- Ensure data between VPC & S3 bucket does not traverse the public internet. Using PrivateLink: Set up an Interface VPC Endpoint for S3 using PrivateLink. Modify VPC's RT to direct S3 traffic to endpoint. 
+	+ Resiliency: 
+		- Prevent object deletion/overwrite: versioning, lock. 
+		- Images to be retrieved quiclkly when needed by app: Store images in private bucket, enable SSE, use pre-signed URLs for temp access. 
+		- Order in which perms are evaulated: Public Access FW, IAM Policies, Bucket Policies, ACLs. 
+		- Enable logging for all requests made to bucket for Reliability ops insights: Enable S3 Server Access Logging for the bucket & specify ANOTHER private bucket to store the access logs. 
+	+ Perf: 
+		- S3 data replicated accross regions for lower-latency access: Cross-Region Replication. 
+	+ Cost:  
+		- Objects with unknown or changing access patterns. Storage class auto moves between 2 access tiers: Intelligent-Tiering. 
+		- Auto move logs after 30d, delete after 1y: Lifecycle Policies. 
+
+* EBS:
+	+ Security: 
+		- Ensure data is enc at rest: Create EBS volume with enc enabled, using default KMS customer master key (CMK). 
+		- Ensure all snapshots are always encrypted, even if original volume wasn't: When creating a snapshot of an unencrypted volume, enable enc on the snapshot by specifying a KMS key. 
+	+ Perf: 
+		- High-performance OLTP DB. Consistent I/O perf, low latency: Provisioned IOPS SSD (io2). 
+		- High-performance DB. Consistent IOPS perf, low-latency throughput: Provisioned IOPS SSD (io1). 
+
+* EC2: 
+	+ Security: 
+		- Instance Storage: Volumes are ephemeral, data can be lost if EC2 instance is stopped, terminated, or fails. 
+	+ Resiliency: Instance Store Volumes: Ephemeral. 
+	+ Perf: 
+		- Direct-attached store volumes ideal for high random I/O perf, low latency: Storage-optimized. 
+
+* EFS: 
+	+ Security: 
+		- It is a regional service, data is auto replicated accross AZs for HA & durability. 
+		- Does not enc data at rest by default! 
+	+ Resiliency: 
+		- EFS is a regional service, data is auto replicated accross multiple AZs for HA & durability. 
+		- EFS IA: Provides lower-cost storage option for infrequently-accessed data while still providing SAME PERF as standard when accessed. 
+	+ Perf: 
+	+ Cost: 
+		- Large datasets, infrequent access but perf needs to be OPTIMAL: EFS IA provides lower-cost storage option for files that are accessed less frequently while still providing same perf as Standard EFS. 
+
+* FSx 4 Windows File Server: 
+	+ Security: Integrates with AD to enforce in-transit enc. Supports enc at rest using KMS. 
+	+ Resiliency: Integrates with Managed MS AD to enforce in-transit enc & supports enc at rest (KMS). 
+	+ Perf: 
+	+ Cost: 
+
+* FSx 4 Lustre: 
+	+ Security: Auto enc data at rest using AWS keys, with option to use customer keys via KMS. 
+	+ Resiliency: FSx 4 Lustre ALREADY auto enc data at rest (KMS). 
+	+ Perf: 
+	+ Cost: 
+
+* FSx 4 OpenZFS: 
+	+ Security: Supports enc both rest/transit & integrates with VPC. 
+	+ Resiliency: Supports enc rest/transit, integrates with VPC for access control. 
+	+ Perf: 
+	+ Cost: 
+
+* FSx 4 NetApp OnTAP: 
+	+ Security: Supports data deduplication, compression, enc, multi-proto access. 
+	+ Resiliency: Supports data deduplication, compression, enc, multi-proto access. 
+	+ Perf: 
+	+ Cost: 
+
+* Storage GW: 
+	+ Security: 
+		- S3 File GW: Provides FS mount on S3. Simplifies file storage in S3, integrating with existing apps through industry-standard FS protos. 
+		- FSx File GW: Can be deployed on-prem as VM (ESXi, MS Hyper-V, KVM), or HW appliance. 
+		- Tape GW: Offers Virtual Tape Library VTL interface, allowing use of existing tape-based backup infra to store data on virtual tape cartridges created on the Tape GW. 
+		- Volume GW: Stored Volumes use S3 as primary data storage & retain all data locally in Storage GW. 
+	+ Resiliency: 
+	+ Perf: 
+	+ Cost: 
+
+
+
+* Backup: 
+	+ Security: 
+		- During backup job creation select CMK under enc settings. 
+		- Ensure some backups are not deleted/altered for a certain period: Apply a legal hold on those backups. 
+		- Ensure backup data cannot be deleted/altered for 7 years, even by the roor user: Enable Backup Vault Lock on the backup vault. Set retention period to 7y. 
+		- Ensure backup operatoins & data transfers between VPC & Backup occur privately (without traversing the public internet): Configure a VPC Interface Endpoint for Backup & route backup traffic through it. 
+	+ Resiliency: 
+		- Store critical data backups using CMK: During the backup job creation select desired CMK. 
+		- Legal notice. Ensure specific backups are not deleted/altered for a certain period: Apply Legal Hold on specific backups. 
+		- Ensure backup ops & data transfers between VPC -> AWS Backup occur privately without traversing the public internet: Configure VPC If endpoint for AWS Backup & route backup traffic through it. 
+	+ Perf: 
+	+ Cost: 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ Compute _________________ 
+
+* ECS/EKS Anywhere: 
+	+ Security: 
+		- Use IAM roles/policies to grant ECS Anywhere Agent necessary perms to communicate with AWS Services. 
+		- Use EKS Anywhere with AWS Connectors & integrations to ensure seamless communication between on-prem clusters and AWS Services. 
+	+ Resiliency: 
+		- Containerized app runs on-prem with same management & Control Plane as is AWS. Which service meets these requirements: ECS Anywhere. 
+	+ Perf: 
+	+ Cost: 
+
+* ECS: 
+	+ Security: 
+		- Run containerized apps on-prem "like" in the Cloud: ECS Anywhere. 
+		- Grant permissions to ECS task to access other services: Use IAM roles for ECS tasks & assign necessary permissions to the role. 
+		- For HA integrate ECS with LB. Ensure app is secure, traffic between LB and ECS task is enc: Deploy App using ECS with ALB, ensure ALB listener is configured for HTTPS. 
+		- Ensure microservices scale independently based on their own demand & failed tasks are auto replaced: Deploy each microservice as an ECS service with desired task count, enable service autoscaling based on CloudWatch metrics. 
+	+ Resiliency: 
+		- Fargate Launch Type: Allows me to run containers without managing underlying EC2 instances; serverless. 
+		- How are the different containers specified for coordination: ECS Task definition. 
+		- Automatically scale # of tasks based on demand: Set Target Tracjing scaling policies for ECS services. 
+		- Use fast provisioning for tasks during the day and reduce costs overnight. ECS feature allows using EC2 capacity optimally for changing demands: ECS Capacity Providers. 
+		- VPC Lattice to connect & secure services across accounts. Services run on EC2 instances registered to target groups in VPCs. How can the services communicate if the VPCs are associated with the same Lattice service network: Services can discover & communicate without peering. 
+		- How can GPU workloads be supported on Fargate: GPU workloads are not supported on Fargate. 
+		- Maximize ECS Task availability: Enable Health Checks & Auto-Healing. 
+		- ECS feature to manage related tasks as a group: ECS Service | Task Groups. 
+		- Stateful app that require sticky session affinity to same instance. ECS task placement strategy: Binpack. 
+	+ Perf: 
+		- App processes large video files and the stores in S3. Ensure app can scale based on # of videos in proc queue: Deploy App as ECS service, integrate with CloudWatch alarms to scale # tasks based on queue len, use IAM roles for tasks to securely access S3 bucket. 
+		- Ops team want to monitor perf & health of containers & services in real time: CloudWatch provides detailed metrics for ECS tasks, services, containers. 
+
+* ECR: 
+	+ Security: 
+		- Use IAM policies to grant specific permissions to users/roles that need to push/pull images. 
+		- Enable auto image scanning for vulnerabilities on push. 
+		- Enable CloudTrail to capture API calls. 
+	+ Resiliency: 
+		- How can ECR be configured for cross-region redundancy: Deploy ECR in multiple regions. 
+		- How can images be replicated across regions in ECR: Enable cross-region replication (CRR). 
+	+ Perf: 
+	+ Cost: 
+
+* EKS: 
+	+ Security: 
+		- What step is essential to integrate OIDC with IAM for EKS Cluster: Enable OIDC for EKS Cluster & use cluster's OIDC provider URL to create IAM OIDC identity provider. 
+		- How does IAM integrate with EKS: NOW (2024) IAM roles can be associated with K8 service accounts, allowing K8 workloads to assume roles and access AWS services. FUTURE: EKS WILL allow direct attachment of IAM policies to pods. 
+		- What is required for EKS Cluster IAM role to work: Permissions to allow EKS Control Plane to create & manage AWS resources (EC2 instances, ELB) for the K8 nodes. 
+		- Essential permission for EKS node IAM role: Permissions to allow nodes to send logs & metrics to CloudWatch & to pull container images from ECR. 
+		- Pod Execution Role: Allows individual pods to assume IAM role & access AWS Services directly without going through the node IAM role. 
+		- IAM Connector Role: It is a bridge between K8 RBAC system & AWS IAM, allowing K8 Service Accounts to be mapped to IAM roles. 
+		- Benefits of Managed Node Groups: Auto apply latest security patches to the OS of the worker nodes. 
+		- Considerations when using self-managed nodes: I have full control over EC2 instances & can apply custom configs, patches, and updates as needed. 
+		- Benefits of EKS over K8 on-prem; security, scalability, management: Auto manages Control Plane, ensuring HA, backups, patching without intervention. Provides built-in integrations with AWS Services (CloudWatch, IAM, VPC), enhancing security & monitoring. 
+		- Ensure data enc in EKS: Enable KMS integration & specify CMK for encrypting the K8 secrets. 
+		- Get detailed logging of EKS Cluster: Enable CloudWatch Logs. Select API, Audit, Authenticator, Controllermanager, Scheduler log types. 
+		- Multi-tenancy: EITHER: Deploy separate Clusters & isolate them with different VPCs. | Single EKS Cluster, separate workloads using K8 Namaspaces + RBAC for access control. 
+		- Maximize netw security: VPC Container Netw If (CNI) to assign each pod its own IP, allowing for fine-grained netw policies. 
+		- Pod-level netw policies using SGs: Use Security Groups 4 Pods feature to associate specific SGs with a K8 Namespace. 
+		- Service Mesh solution for end-to-end enc for EKS-based App: AWS App Mesh & enable mutual TLS (mTLS) for service-to-service communications. 
+		- Ensure web tier auto scales based on incoming traffic, distribute traffic efficiently among the pods with ALB: Use ALB Ingress Controller feature which auto provisions ALB & configures it to route traffic to the pods. 
+		- NLB to efficiently manage high-volume, high-speed traffic: Use NLB Ingress Controller feature. 
+		- Ensure data stored on EBS via EKS CSI is enc at rest: Use EBS CSI Driver to provision enc EBS volumes by setting enc param TRUE in the StorageClass. 
+		- Ensure pods securely access EFS: Use EFS CSI Driver & specify the required Access Points in the StorageClass | PersistentVolume specification. 
+	+ Resiliency: 
+		- Apps cannot have downtime during region failures. How can EKS cluster be deployed to MAXIMIZE reliability: Deploy accross multipe AZs. 
+		- Multi-AZ app must remain available if AZ goes down. Configure EKS cluster for fault tolerance: Spread nodes across 3 AZs. 
+		- Multi-AZ EKS cluster app must be accessible via DNS name over TLS. What should be used to deploy an ingress load balancer for EKS: ALB. 
+		- Stateful app requires persistent shared storage across pods: Enable EFS integration with K8 volumes. 
+		- App experiences spikes in traffic throughout the day. Auto scale # of pods dynamically based on usage. K8 feature can help autoscale pods on EKS: Horizontal Pod Autoscaler. 
+		- Restric direct access to EKS API server endpoint. How can API calls to EKS Control Plane be managed securely: Deploy API GW in front of the EKS endpoint. 
+		- What is an advantage of EKS managed node groups for reliability: Automatic replacement of unhealthy nodes. 
+		- Stateful app requires shared FS accross pods (multi-AZ), consistent low-latency perf: EFS. 
+		- Break apart a monolithic app into independently scalable & resilient microservices. Which K8 pattern supports building loosely coupled microservices on EKS: Service Discovery. 
+		- Access app & sys logs, retain for 30 days: CloudWatch Logs. 
+	+ Perf: 
+	+ Cost: 
+
+* EC2: 
+	+ Security: 
+		- Automate creation, mgmt, deployment of secure, scalable, repeatable server images: Image Builder. 
+		- Bastion Host: Deploy Bastion in public subnet, restrict its SSH to known IPs, use it to jump to App servers in private subnet. 
+		- Multi-region App. Securely manage key pairs: Generate a unique key pair for each region, store them in a centralized, enc storage solution with strict access controls. 
+		- Advantages of Systems Manager: Provides a unified interface to access EC2 instances without needing to open inbound ports or manage SSH keys. 
+		- Securely accessing DynamoDB from EC2 instances: Use roles to grant necessary permissions to the App to access DynamoDB, eliminating the need for long-term credentials. 
+		- Implement IAM Roles Anywhere to get temp creds for external workloads that use X.509 certs issued by their CA: Register the CA with IAM Roles Anywhere as a trust anchor & establish trust between their public-key infra (PKI) and IAM Roles Anywhere. 
+		- Apply patches & updates to the OS & SW running on the EC2 instances once a quarter. 
+		- App deployed across multiple EC2 instances in different AZs. They've recently been target of DDoS attack. Maximize security on routing strategies: Implement private subnet for instances and route traffic through NAT GW or NAT instance. 
+		- Ensure data at rest is enc (EBS): Enable enc when creating EBS volume via KMS. 
+		- EC2 instances behind ALB with SSL termination: LB offloads decryption process, improving perf. Data will NOT be enc between LB & EC2. 
+		- Fleet of EC2 instances. Ensure all are consistently patched to mitigate vulnerabilities using Systems Manager: Patch Manager allows me to define patch baselines. Patch Manager can path OS and App SW. 
+		- Integration of EC2 with CloudTrail & CloudWatch: CloudTrail can log API calls made on EC2 instances, these logs can be streamed to CloudWatch for real-time monitoring & alarming. 
+		- Nitro Enclaves: Provide virtualized env separate from the main EC2 instance, ensuring data processed inside the enclave cannot be accessed from outside, even by the EC2 instance itself. 
+	+ Resiliency: 
+		- Critical EC2 app instances must be restored quickly in case of failure RTO=10 m: Enable EC2 Fast Snapshot Restore to boot from snapshots quicker + Use ASG with Health Checks and Replacement. 
+		- Critical EC2 app instances must recover rapidly from system failures RTO=10 m: Use EC2 Auto Recovery to auto restore instances. 
+		- Videos uploaded S3, trigger SNS -> SQS. EC2 workers poll SQS. The system must continue processing if components fail. Make it resilient: Process messages idempotently in case of retries. 
+		- Deploy EC2 instances across DEV, TEST, PROD accounts. Instances must be deployed with consistent configuration (with different sizes in each env): Build EC2 Launch Templates with params. 
+		- Monitor perf of EC2 instances with dashboards tracking metrics like CPU, MEM, disk. How are these metrics collected: Install CloudWatch Agent on each instance. 
+		- Traffic varies throughout the day. Scale EC2 capacity up/down to meet demand. Scaling should happen predictively BEFORE usage spikes occur. What service can be used to achieve Predictive Scaling: EC2 Auto Scaling with Predictive Scaling. 
+		- App running on EC2 Auto Scaling. They want to maintain AVG CPU ~ 40%. How can it be configured to keep CPU usage near target: Use Target Tracking Scaling Policies tied to CPU use. 
+		- Track config changes & compliance of EC2 instances. Changes to SGs, AMIs, instance types must be recorded. How can EC2 config changes be audited: Set up AWS Config Riles & Recording. 
+		- Sensitive workloads on EC2 that REQUIRE GUARANTEED physical sever with no other customers sharing the host (instance isolation). How can EC2 instances be deployed on dedicated servers: Assign EC2 Dedicated Instaces for single-tenant hosts. 
+		- Maximize HA. CANNOT have instances placed on the same HW: Launch instances in a Spread Placement Group (implies multi-AZ). 
+	+ Perf: 
+		- ML, compute-intensive workloads, high-perf processors, high-speed networking: C5 instances for compute-optimized perf. 
+		- Benefits of Accelerated Computing instances: Leverage HW accelerators, or co-processors, ro perform functions such as floating-point number calculations, graphics processing, data pattern matching more efficiently than CPUs. 
+	+ Cost:  
+		- Stable, predictable workloads. 1 | 3y term: Reserved Instances. 
+		- Flexible workloads, can tolerate interruptions: Spot Instances. 
+		- HA architecture, stateful app, failover with same IP: ENI. 
+
+* EC2 Image Builder: 
+	+ Security: 
+		- Provides fully managed service to create, maintain, validate, share VMs or Container Images. 
+		- Ensure AMIs are always compliant with security standards: Can replicate AMIs accross multiple Accounts & Regions without additional config. 
+	+ Resiliency: 
+		- Create standardized AMI images for deploying EC2 instances. Image builds must be automated, secure, highly reliable: Build images with EC2 Image Builder using pipelines. 
+		- Update & patch EC2 AMIs. Building new AMIs with patches must be automated to ensure they're always up-to-date: Use EC2 Image Builder pipeline recipies to patch images. 
+	+ Perf: 
+	+ Cost: 
+
+* Lambda: 
+	+ Security: 
+		- Implement proper IAM roles/perms for functions to restrict unnecessary access. 
+		- Use built-in support for env var enc/dec via KMS. 
+		- Create IAM role with necessary perms and associate it with the function as the exec role. 
+		- Enable X-Ray tracing config and ensure exec role has perms to send trace data to X-Ray. 
+		- Enable GuardDuty in the Console. Ensure it has perms to scan Lambda function logs in CloudWatch. 
+	+ Resiliency: 
+		- Critial backend services that must maintain consistent perf & availability. How can cold starts be minimized to improve perf consustency: By proviosining Lambda CONCURRENCY. 
+		- Critical Lambda function must initialize quickly to provide low latency responses. What Lambda keep-alive setting can help maintain instantiated instances: Provisioned Concurrency. 
+		- Async Lambda function that occasionally fails due to dependecy issues. Should retry automatically before failing. How can the function be configured to retry on failure: Set up Lambda DLQ & Retry Policy. 
+		- Critical workloads on Lambda. Monitor metrics to ensure availability & perf. What Lambda metric is essential for monitoring function errors: Throttles. 
+		- Perf testing on Lambda function. Tests are failing with throttling errors when calling the function. What should I verify to ensure Lambda function can scale up under increased load: Service Quotas are increased. 
+	+ Perf: Ensure function completes: Split video file into smaller chunks and process each chunk with separate Lamnda invocations. 
+	+ Cost: serverless backend that auto-scales, only pay for compute time. 
+
+* Serverless App Repo (SAR): 
+	+ Security: 
+		- Review app source code, documentation, perms. Ensure it adheres to healthcare compliance requirements. 
+		- Review app source code, ensure it has integrated logging mechanisms, such as CloudWatch Logs. 
+	+ Resiliency: Ensure app can be easily redeployed or rolled back on case of deployment issues: Use the built-in semantic versioning in the SAR during deployment. 
+	+ Perf: 
+	+ Cost: 
+
+* Elastic Beanstalk: 
+	+ Security: 
+		- Provides managed platform updates, ensuring runtime env is up-to-date with latest patches. 
+		- Enhanced Health Reporting: Auto integrates with SNS. Provides detailed metrics & logs. 
+		- Integrate with X-Ray: Enable X-Ray from the EB env conf and ensure the necessary IAM roles are in place. 
+	+ Resiliency: 
+		- App must remain available EVEN if an AZ goes down: Launch instances in multiple AZs. 
+		- Devs need to routinely deploy new versions of app code. PROD env must not be disrupted during deployments: Blue/Green. 
+		- Get insights into app perf & errors. Which approach will enable tracing requests: Enable X-Ray daemon on EC2 instances. 
+	+ Perf: 
+	+ Cost: 
+
+* Lightsail: 
+	+ Security: Enable auto backups to create daily snapshots of the instance. 
+	+ Perf: 
+	+ Cost: 
+
+* App Runner: 
+	+ Security: 
+		- Directly build & deploy app from source repo, enable auto scaling. 
+		- Ensure traffic stays private: Configure VPC Interface Endpoints & necessary routes in the VPC RTs. 
+		- Ensure data is enc: Rely on App Runner's built-in enc for data at rest, HTTPS for data in transit. 
+	+ Resiliency: 
+		- Multi-AZ app must remain available if an AZ becomes isolated. How does App Runner provide redundancy: By deploying each service to multiple AZs. 
+		- App must tolerate instance failures with no downtime. How does App Runner achieve fault tolerance: Enable health checks & auto-healing. 
+		- Focus on code, NOT infra. Solution should auto scale & provide built-in monitoring. Service will allow to deploy apps WITHOUT managing servers or clusters: App Runner. 
+	+ Perf: 
+	+ Cost: 
+
+* Batch: 
+	+ Security: 
+		- Use IAM policies to grant each tem perms ONLY to specific job queues & definitions related to their project. 
+		- Integrate with CloudWatch Logs to capture logs. Set up Alarms for specific error patterns. 
+	+ Resiliency: 
+		- Jobs must complete reliably even if EC2 instances fail. How does Batch provide reliability for batch workloads: By retrying failed jobs automatically. 
+		- How does Batch provide automation for running batch jobs: By automatically provisioning EC2 capacity. 
+	+ Perf: 
+	+ Cost: Process large datasets that vary in size and complexity, from minutes to days: Implement hybrid approach: On-Demand: critical & Long-Running, Spot: short jobs. 
+
+* Step Functions: 
+	+ Security: 
+		- Use IAM roles with fine-grained perms for each state to ensure only necessary services are accessed. 
+		- Use EventBridge to capture events, then trigger Step Functions State Machine. 
+	+ Resiliency: 
+		- Multiple analyses in parallel. Ensure failure of one parallel task doesn't stop the entire state machine: Define Catches in the Parallel State. 
+		- Design resilient worklow. Ensure non-transient failures in a state machine are handled gracefully. Which design feature allows for custom error handling after all retries have been exhausted: Use Catch Field in the state definition. 
+	+ Perf: 
+	+ Cost: 
+
+* SAM: 
+	+ Security: 
+		- Use built-in support for IAM to define fine-grained perms for each serverless resource. 
+		- Use local command to test locally, ensuring local env mirrors PROD. 
+	+ Resiliency: 
+		- Ensure app can be quickly redeployed in another region for HA: Define the resources in the SAM template & use CloudFormation StackSets to deploy the app in multiple regions. 
+		- Ensure Lambda functions are not affected by regional service disruptions. What to include in the SAM template to achieve this: Specify DLQ config for async invocation failure handling. 
+	+ Perf: 
+	+ Cost: 
+
+* Amplify: 
+	+ Security: 
+		- ALREADY auto enc all data. 
+		- ALREADY integrates with CloudWatch. 
+	+ Resiliency: 
+		- Ensure backend API changes do not disrupt the mobile app availability: Use Amplify's GraphQL Transform feature to auto version APIs and manage backward compatibility. 
+		- Ensure Amplify-generated APIs remain loosely coupled with frontend, facilitating independent scalability and updates: Use Amplify DataStore for sync offline & online data store, providing consistent API layer. 
+		- Ensure I can identify & respond to perf bottlenecks. Which service should be integrated to gain actionable insights into app perf: Connect CloudWatch to Amplify to set alarms & view metrics for the app. 
+	+ Perf: 
+	+ Cost: 
+
+* Outposts:
+	+ Security: 
+		- Can integrate with AWS Services, allowing me to use familiar AWS security tools and practices on-prem. 
+		- Use IAM roles for EKS worker nodes on Outposts to ensure they have the necessary permissions to access other AWS Services. 
+		- Use IAM roles and policies that grant specific perms to AWS Outposts resources. 
+	+ Resiliency: 
+		- Hybrid cloud solution app requires low-latency access to on-prem systems AND AWS services: Deploy app on Outposts & use Local GW options to connect to on-prem systems. 
+		- Data must be stored on-prem: Deploy workloads on Outposts using Local GWs for low-latency connections & storing data locally to comply with regulations. 
+		- Low latency, local data processing, enhance resiliency: Deploy Outposts to handle the low-latency & local data processing needs, use its ability to run AWS services on-prem & seamlessly integrate with the rest of the AWS cloud. 
+	+ Perf: 
+	+ Cost: 
+
+* VMware Cloud: 
+	+ Security: 
+		- Seamless integration between on-prem VMware env and AWS Services using familiar VMware tools. 
+	+ Perf: 
+	+ Cost: 
+
+* Snow Family Compute: 
+	+ Security: 
+		- Collecting vast amounts of data from emote locations. Process some data on-site & securely transfer all data to AWS: Snowball: large-scale data transfer with some on-device compute capabilities. 
+		- Compute-intensive app on Snowcone: Subset of EC2 APIs/AMIs. 
+	+ Perf: 
+	+ Cost: 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ DB _________________ 
+
+* RDS: 
+	+ Security: 
+		- Compliant with healthcare regulations: KMS enc data at rest. 
+		- Enable IAM authentication: Create IAM policy that grants rds-db:connect permission & associate it with DB users. 
+		- Supports both native and Kerberos authN: PostgreSQL. 
+		- Auto passw rotation: Secrets Manager. 
+		- Configure SGs to allow only specific IP addresses or CIDR blocks. 
+		- EC2 instances need to access DB: Use Secrets Manager to store RDS creds. Assign IAM role to EC2 instances that allows them to retrieve the credentials. 
+		- CloudWatch Metrics for perf & availability: Freeable Mem. 
+		- Enhanced Monitoring: Provides real-time access to OS-level metrics. 
+		- DB logs: Use RDS console to view & download them directly. 
+		- Event Notifications: Use Event Subscriptions to subscribe to specific RDS events + send notifications to SNS topic. 
+		- Ensure data is enc at rest: Use KMS to create a CMK & enable enc at rest for the RDS instance. 
+		- Ensure data is enc in transit: Enable SSL/TLS and ensure app connects using it. 
+		- Proxy: Integrate with Secrets Manager to store/retrieve DB creds. 
+		- Proxy: Assign SG. 
+		- Proxy debugging purposes: Enable Enhanced Logging. 
+	+ Resiliency: 
+		- Proxy: Efficiently manage DB connections. 
+		- Experiencing intermittent DB connectivity issues due to sudden spikes in user traffic: Use RDS Proxy. 
+		- Configure Multi-AZ deployment to ensure sync data replication and auto failover capabilities. 
+		- Experiencing significant read traffic, impacting app perf. How to use RDS Read Replicas to improve app perf & resiliency: Create multiple RDS Read Replicas accross AZs, direct read traffic to them to balance the load & improve app read throughput. 
+		- How to config RDS for min downtime even during DB updates/patching: Create RDS Multi-AZ deployment to provide auto failover to standby replica in another AZ during maintenance events. 
+		- Key advantage of using RDS Multi-AZ deployments with SQL Server engine for an app that requires high DB W availability & min downtime: RDS Multi-AZ deployments for SQL Server support sync replication to a standby instance for HA (no manual intervention during failover). 
+		- App experiences variable + unpredictable spikes in DB connections. How can RDS Proxy enganhe resiliency: Acts as a connection pool to absorb spikes in DB connections, reducing the risk of DB overload. 
+		- Ensure DB continuity & data durability: Enable Multi-AZ deployments & config RDS Read Replicas in multiple regions for both HA & DR. 
+		- Which service to continously monitor health of RDS instance & receive notifications for ops issues: CloudWatch Alarms key perf metrics & send notifications when thresholds are breached. 
+		- Enhanced Monitoring: Enable it on RDS instance to collect & analyze OS-level metric with granularity up to 1 s. 
+		- RDS Perf Insights: Extends monitoring capabilities by providing a dashboard with visual representation of DB load and perf metrics. 
+		- Configure RDS to ensure DB logs are effectively monitores & retained: Enable loggins on RDS instance & config CloudWatch Logs to store logs from the RDS instance for long-term retention & analysis. 
+		- Proactive incident response mechanisms to ensure min downtime. RDS Event Notifications: Set it up to send alerts to SNS Topic when specific DB events occur, such as failover events, so that auto responses can be triggered. 
+		- RDS Recommendations: Review them regularly & manually apply suggested changes. 
+		- How does RDS Proxy contribute to DB failover resiliency in a Multi-AZ deployment: Maintains persistent connection to DB, to auto reroute traffic to standby instance in another AZ without dropping active connections. 
+		- How does RDS Proxy promote loose coupling in app achitecture: By serving as an intermediary layer. 
+		- Metrics to monitor in RDS Proxy to gain insights into resiliency and perf of DB connections it manages: Track the # of active connections & connection durations through RDS Proxy to understand patterns & identify potential bottlenecks. 
+	+ Perf: 
+		- Proxy: connection pooling. 
+		- Heavy TXN load: Provisioned IOPS storage. 
+		- I expect high traffic during seasonal sales. Solution must handle increased load. Which instance type: Mem-optimized. 
+		- Performance Insights: Visualize DB load. Filter by SQL statements, waits, hosts, users. 
+	+ Cost: 
+		- Reserved Instances. 
+		- What will Trusted Advisor do: Give me recommendations on underutilized RDS instances to optimize costs. 
+
+* RedShift: 
+	+ Security: 
+		- IAM SSO, MFA, ALREADY enc at rest & trasit. 
+		- IAM authentication: Users can generate temp DB creds and use them to log in to cluster. 
+		- SGs: Act as stateful FW, allowing me to specify inbound & outbound rules. 
+		- VPC Interface Endpoints: Allow me to connect to my cluster without using a public IP, ensuring all traffic remains within the AWS netw. 
+		- Audit trail of all activities. Log to S3: Enable Audit Logging & specify destination S3 bucket. 
+		- Monitor & retain logs of all activities & perf metric via CloudWatch: Enable Audit Logging & integrate with CloudWatch Logs. 
+		- Audit trail of all activities: Enable User Activity Logging feature. 
+		- Ensure data is enc: Enable default enc & SSL. 
+		- Tokenization: Integrate 3rd-party tokenization solution to tokenize data before it's loaded into the data WH. 
+	+ Resiliency: 
+		- Serverless: Automated snapshots with cross-region copy. 
+		- With Provisioned Clusters, ensure HA & durability: Implement Multi-Node Redshift cluster with Leader/Compute nodes spread accross multiple AZs. 
+		- How does Serverless ensure resilient DWH for workloads with variable query volumes: Auto adjusts underlying compute resources to match workload demands, ensuring consistent query perf. 
+		- Achieve loose coupling with other services for data processing & analysis: Lambda functions triggered by events from S3 to preprocess data before Redshift, publish results to SNS. 
+		- Cross-region snapshots to enhance DR: Configure Redshift cluster to auto take snapshots & replicate them to multiple regions, ensuring data can be recovered quickly in case of regional outage. 
+		- Features ensure fault tolerance: Redshit auto sync data replication to 3 different nodes within a cluster & cont backups to S3. 
+		- Redundancy: Configure Redshift cluster to cont backup data to S3, enable snapshot copy to another region for geo redundancy. 
+		- Global replication: Use Redshift cross-region snapshots to backup & restore data to clusters in different regions for global data presence. 
+	+ Perf: 
+		- Real-time analytics: RA3 nodes. Leverage managed storage & high-perf compute for large datasets. 
+		- Primary Cluster Mode: Leader Nodes & Compute Nodes to manage query coordination & execution. 
+	+ Cost: Spectrum to run queries against exabytes of data in S3. 
+
+* OpenSearch: 
+	+ Security: 
+		- VPC endpoint, If endpoint. 
+		- Ensure strict access control: Use IAM users + groups. Create OpenSearch-specific policies, attach them to who needs access. 
+		- Ensure users have appropriate perms to access specific indices/docs: FGAC (Fine-Grained Access Control). 
+		- Ensure only authenticated users can access domain: IAM, Cognito. 
+		- Ensure data remains enc as it moves between nodes in OpenSearch cluster: Node-to-Node enc. 
+		- Enc available in OpenSearch: Node-to-Node, HTTPS for OpenSearch domains. 
+		- Security Analytics: OpenSearch Dashboards for visualizing security metrics & trends. Anomaly detection to id unusual patterns. 
+	+ Resiliency: 
+		- Distribute nodes accross AZs, Snapshots. 								// https://docs.aws.amazon.com/opensearch-service/latest/developerguide/disaster-recovery-resiliency.html
+		- How are read requests handled if primary node responsible for a Shard becomes unavailable: Distributes read requests to replica nodes of the unavailable shard, maintaining service availability without promoting them. 	// Auto promotes replica to primary if it is really dead. 
+		- How does OpenSearch ensure data consistency: EVENTUAL CONSISTENCY, data is replicated to Replica Shards async after being indexed to the primary shard. 
+		- What replication strategy does OpenSearch use to enhance data durability: SYNC replication to multiple AZs. 
+		- How is resiliency of seach & analytics workloads ensured when node/HW fails: OpenSearch auto redistributes workload to healthy nodes, replaced failed nodes (no manual intervention). 
+		- How does serverless allocate compute units to handle varying workloads and ensure consistent perf: OpenSearch Serverless auto scales compute units up/down in response to workload. 
+		- How is data consistency maintained accross distributed search infra: EVENTUAL CONSISTENCY, data is indexed on primary node then async replicated to other nodes. 
+	+ Perf: 
+		- Real-time analysis of market data. Low-latency responses for their complex queries: Scale vertically. 
+		- Provides a distributed search env, options to choose Dedicated Master Nodes & Data Nodes, includes Kibana. 
+	+ Cost: Reserved Instances. 											// https://repost.aws/knowledge-center/opensearch-domain-pricing
+
+* ElastiCache (Redis | Memcached): 
+	+ Security: 
+		- Data can be enc at rest (built-in) & transit (TLS). 
+		- Integration with IAM: IAM Policies can be used to define perms for ElastiCache API actions but not for data ops within Redis. 
+		- Ensure cache cluster is isolated & secure: Launch ElastiCache for Redis cluster in a VPC and use VPC Peering to connect it with other necessary resources. 
+		- Monitor specific events (cluster): ElastiCache Events provide notifications for cache clusters status changes, SNS topic modifications, and Param Group changes. 
+		- Monitor specific logs (instances): ElastiCache for Redis Engine Logs provide detailed info about cache engine ops -> CloudWatch Logs. 
+		- Ensure cache clusters always running latest version (security patches): Use ElastiCache Dashboard to APPLY engine version upgrades to Redis clusters. 
+	+ Resiliency: 
+		- Spread data over more nodes. Place nodes multi-AZ. 
+		- How does ElastiCache for Memcached ensure redundancy: DOES NOT inherently provide redundancy; it is achieved at app level by implementing a distributed caching strategy. 
+		- Does ElastiCache for Memcache support data replication across nodes: NO, it is a simple caching solution. 
+		- Node cluster management in ElastiCache for Memcached: Auto node recovery & replacement. 
+		- What caching strategy can be implemented with ElastiCache for Memcached to enhance availability and fault tolerance: Client-side sharding across nodes. 
+		- Redis bect practices: Minimize cost by using single-node Redis cluster for production. Rely on ElastiCache auto node recovery for HA. 
+		- Redis Slow Log feature: Records commands that exceed a specified exec time. 
+		- Monitor events (Redis): Provides notifications for cache cluster status changes, SNS topic modifications, Param Group changes. 
+		- Redis Engine Logs: Provide detailed info about cache engine ops, can be published to CloudWatch Logs. 
+		- Monitoring & logging in Redis: Supports real-time monitoring through CloudWatch metrics + Engine Logs. 
+		- Ensure cache clusters are always running latest + most secure version of Redis: Use ElastiCache Dashboard to apply engine version upgrades. 
+	+ Perf: 
+		- Reduce latency with user profile service, DB queries: Cache frequently accessed user profile data, reduce load on DB. 
+		- Redis basic architecture: Primary-replica. P: W, Rs: R. 
+		- Memcached basic architecture: Primary-replica. P: W, Rs: R. 
+		- Redis Slow Log feature: Records commands that exceed specified execution time. 
+		- Real-time product recommendations. Monitoring & logging: Real-time monitoring through CloudWatch Metrics + Engine logs -> CloudWatch Logs. 
+	+ Cost: 
+		- Variable traffic patterns (predictable workloads): reserved nodes. 
+
+* DynamoDB: 
+	+ Security: 
+		- Data is enc at rest. Use AIM roles. VPC endpoint. 
+		- Ensure onlt specific IAM users/roles have access to certain tables/actions: Use IAM policies. 
+		- Ensure EC2 instances in a VPC privately access (no public internet): Create a VPC GW Endpoint & add it to RT. 
+		- DAX & IAM: IAM can be used to define policies that grant/deny access to DAX actions/resources. 
+		- DAX monitoring & logging: CloudWatch Metrics & log access patterns using CloudWatch Logs. 
+		- Ensure data enc DAX: Rely on DAX's default enc mechanisms: auto enc data at rest & SSL/TLS. 
+	+ Resiliency: 
+		- Handle peak periods: Global Tables. 
+		- How does DynamoDB maintain data redundancy & protect against data loss: By storing 6 copies of data accross AZs in a single region. 
+		- Enhance resiliency: Set up DDB Global Tables to replicate data across regions, providing a fully managed, multi-region, multi-master DB. 
+		- Ensure DDB table is able to handle unpredictable workloads with no service disruption by configuring R/W capacity mode: Choose on-demand capacity mode for the table, which auto adjusts R/W cap to handle workload as it changes. 
+		- High resiliency for critical apps: Auto distributes data across multiple data centers within a region. Provides built-in backup & restore. 
+		- When using Provisioned Capacity mode how to auto adjust table's throughput to maintain perf during varying workloads: Implement DDB Auto Scaling to auto adjust table's R/W cap settings in response to actual app usage. 
+		- How do GSIs (Global Secondary Indexes) contribute to resiliency of query perf: GSIs provide additional query flexibility by allowing queries on non-primary key attributes, which can distribute R ops and reduce the load on the main table. 
+		- How can DDB Streams be used to enhance resiliency of app data layer: Provide a way to trigger Lambda functions for real-time processing of data changes, allowing for decoupled, event-driven architectures that enhance resiliency. 
+		- How does DAX handle read requests if primary node fails to ensure HA: It uses a multi-node cluster config where read requests are distributed across nodes. If primary fails another one takes over. 
+		- How does DAX maintain consistency with the table: With STRONG CONSISTENCY by updating the cache in REAL TIME as data is written to the table. 
+		- How does replication within DAX cluster contribute to the resiliency of the caching layer: It replicates cache data across multiple nodes within DAX cluster, providing fault tolerance against individual node failures. 
+	+ Perf: 
+		- Auto scales capacity up/down based on actual request traffic, with no intervention. 
+		- Real-time transaction processing system. Reduce latency during peak hours: DAX (DynamoDB Accelerator). 
+		- Monitor perf & health: CloudWatch Metrics: R/W capacity units. 
+		- Process each txn in real-time for fraud detection: Enable DDB Streams on the table to capture changes. 
+		- Ensure data enc: DDB auto enc all data rest using AWS owned keys, in transit SSL/TLS. 
+		- Architecture of DAX: Distributed in-mem cache. 
+	+ Cost: On-Demand capacity mode. 
+
+* DocumentDB (~MongoDB):
+	+ Security: 
+		- Use Secrets Manager to manage primary user passwords. Data can be enc at rest & in transit. Use IAM. 
+		- Basic authN: Uses native MongoDB authN: username+password. 
+		- Default port: 27017. 
+		- Enc certain sensitive fields at client side: Use KMS, create sym key, provide necessary IAM usage perms. 
+		- Enc: KMS (rest), TLS (transit). 
+		- Monitoring CloudWatch Metric: FIRST indicator of activity (general health & perf): CPUUtilization. 
+	+ Resiliency: 
+		- Can only run in a VPC with at least 2 subnets (2 AZs). 
+		- How does DocumentDB leverage distributed storage: Stores data on a distributed FS that spans multiple AZs, enabling horizontal scaling. 
+		- Data redundancy: Auto replicates data 6 times accross 3 AZs, cont backs up to S3. 
+		- How does Global Clusters enhance data availability & DR: ASYNC replication across regions, enabling fast DR & global data access. 
+	+ Perf: 
+		- Real-time analytics: Read Replicas. 
+		- Profiler: Logs slow-running ops & provides insights into exec time. 
+	+ Cost: Reserved Instances. 
+
+* Neptune:
+	+ Security: 
+		- Can only be created in a VPC. Its endpoints only accessible within. Only allows SSL/HTTPS connections. Data can be enc at rest. 
+		- Control access: Integrate with IAM to define Fine-Grained Access Policies. 
+		- Secure Neptune Cluster Endpoint: SG. 
+		- Patches: Schedule maintenance windows in Neptune to AUTO apply patches. 
+		- Enc: KMS (rest), TLS (transit). 
+		- Capture significant events & errors: Error Logs. 
+		- Be notified of specific events: Neptune Events allows me to subscribe to specific DB events using SNS. 
+	+ Resiliency: 
+		- Can only be created in a VPC with at least 2 subnets (2 AZs). 
+		- DB must remain available even if AZ fails (how HA): By replicating data SYNC across AZs. 
+		- DB must remain available even if a Neptune node fails: By replicating data SYNC across nodes. 
+	+ Perf: PIOPS storage. 
+	+ Cost:  
+		- Spiky traffic demand: serverless. 
+		- Steady, predictable traffic: Provisioned Instances. 
+
+* QLDB:
+	+ Security: 
+		- Enc: Data ALREADY enc at rest (KMS). 
+		- Only accepts secure connections (HTTPS). 
+		- Integration with IAM: Allows defining granular perms for specific ledger ops using IAM policies. 
+		- Isolated & secure: Supports VPC Endpoints, allows private connectivity between ledger & VPC, but does not use SG DIRECTLY (SG are attached to the endpoint). 
+		- Monitor perf & health: Integrates with CloudWatch: metrics & alarms. 
+	+ Resiliency: 
+		- Journal Storage ALREADY has sync replication AZs on txn commits. 
+		- Data must remain available even if AZ fails: By replicating data SYNC across 3 AZs. 
+		- Ensure no data loss if failure occurs when streaming data into QLDB: Use Kinesis Data Streams for retries on transient errors. 
+	+ Perf: 
+		- Provisioned R/W capacity. 
+		- Basic architecture: Distributed ledger DB: transparent, immutable, crypto verifiable txn log. 
+	+ Cost: 
+		- Predictable usage: Reserved computing capacity. 														// https://www.dragonflydb.io/finops/amazon-qldb-cost-optimization
+
+* Aurora: 
+	+ Security: 
+		- Use IAM, VPC SGs, Kerberos. 
+		- Authentication methods: BOTH IAM & DB-native. 
+		- Integration with Secrets Manager: Use ir to auto rotate and manage creds with no manual intervention. 
+		- Deploy it in a private subnet and use SGs. 
+		 - Not directly accessible from internet but reachable from App servers: Set "Public Accessibility" to NO, ensure App servers are in the same VPC. 
+		- Ensure private communication with other AWS Services: Set up VPC Interface Endpoint with PrivateLink. 
+		- Monitor & audit activity in real time: Activate Activity Streams. 
+	+ Resiliency: 
+		- Global DBs. 
+		- Architecture: Divides DB volume into 10GB segments spread accross many disks, wach chunk replicated 6 ways accross 3 AZs. 
+		- How does Aurora ensure storage resiliency to protect against data loss: Aurora auto replicates data across multiple AZs and continously backs up data to S3, providing auto recovery from physical storage failures. 
+		- Ensure DB availability & fault tolerance: Deploy Aurora DB cluster across multiple AZs, with auto failover to Read Replica in the event of Primary Instance failure. 
+		- What feature of Aurora cluster architecture PRIMARILY contributes to its high reliability & seamless failover capabilities: The Cluster Volume is a single virtual volume that spans multiple AZs with 2 copies of data in each zone. 
+		- How does replication in Aurora enhance DB resiliency and help maintain data availability for critical apps: Replication in Aurora is async, allowing for cross-region replicas that can be promoted in case of regional outages. 
+		- In what scenario is Aurora Multi-Master deployment most beneficial for resiliency? What is primary advantage: Multi-Master deployment is best for apps requiring continous W availability accross different geo locations. 
+		- How do Read Instances contribute to fault tolerance & perf: Aurora Read Instances can be pre-warmed to handle sudden spikes in traffic, ensuring consistent perf. 
+		- How to use Blue/Green deployment to ensure min downtime & high resiliency during app updates: By running 2 Aurora clusters in parallel, switching over the app's DB connection strings -> green env after testing & validation. 
+		- Key benefit of Aurora Serverless for app with unpredictable workloads: Auto scales DB compute capacity up/down based on actual usage. 
+		- Ensure Serverless DB cluster auto adjusts to handle fluctuating workloads and maintains high resiliency: Configure min/max ACUs to define scaling range. 
+		- How to use ACUs to ensure DB meets workload demands: Define min/max ACUs. 
+		- Mitigate cold starts to maintain high perf (Serverless): Pre-warm the Aurora Serverless DB by periodically sending dummy queries to keep it active. 
+	+ Perf: Serverless. 
+	+ Cost: 
+		- Serverless auto-scales based on actual usage, so I only pay for what I use. 
+
+* Keyspaces (Cassandra):
+	+ Security: 
+		- Data can be enc at rest. Only accepts secure connections (TLS). 
+		- AuthN methods: IAM (no native). 
+		- Ensure data engineers can access: Create IAM role with necessary perms, allow data engineers to assume this role. 
+		- Ensure individual tables are enc: Keyspaces ALREADY auto encs all tables at rest. 
+		- Monitor health & perf: CloudWatch. 
+	+ Resiliency: 
+		- Multi-Region Replication, Point-in-time recovery. 
+		- How does Keyspaces use distributed storage to manage large-scale, global DBs: Uses a distributed multi-AZ storage system that auto partitions data across nodes to enhance scalability & availability. 
+		- Data redundancy: Ensures data redundancy by replicating data across AZs in the region. 
+		- How does Keyspaces maintain reliable DB service for users: Auto manages provisioning, patching, replication of data across AZs. 
+		- Data must be remain available if AZ goes down: By auto replicating data to Replica Nodes. 
+	+ Perf: Provisioned Throughput. 
+	+ Cost: Use Cost Explorer, metric: Billable table size (Bytes) of each table. 
+		- On-Demand capacity mode: pay only for what I use. 
+		- Provisioned capacity mode: optimize costs if I know exactly what I need. 
+
+* Timestream:
+	+ Security: 
+		- Data can be enc at rest with KMS. ALREADY enc in transit with TLS. 
+		- Integration with IAM: Using IAM roles & policies to define fine-grained perms for TimeStream actions & resources. 
+		- VPC Endpoints: Natively supports, allowing private communication. 
+	+ Resiliency: 
+		- ALREADY serverless. 
+		- ALREADY replicates data across AZs. 
+		- Analytics queries must be resilient to temp Timestream errors: Execute queries with retry logic in the app. 
+		- Prevent cascadind errors. How can system be designed to min coupling: Implement SNS & SQS ASYNC integration. 
+		- Fault tolerance: Implement retries & exponential backoff in the app. 
+		- Metric to prioritize to track data coming into the DB: Write Input Records. 
+	+ Perf: 
+		- Mem & magnetic storage. 
+		- Basic architecture: Serverless time-series DB service designed to store & analyze time-series data with high efficiency at scale. 
+		- Ensure optimal perf & health, monitor metric to track data coming into the DB: Write Input Records. 
+	+ Cost: 
+		- Batch multiple time series events per write to reduce the number of write requests. 
+		- Use Multi-measure records: write multiple time-series measures in a single write request. 
+
+* MemoryDB (Redis):
+	+ Security: 
+		- Redis ACLs: Fine-Grained Perms based on COMMANDS & KEYS. 
+		- VPC If Endpoints: Allows private connection between MemDB cluster & VPC (no internet). 
+		- Enc: KSM (rest), TLS (transit). 
+		- Monitor specific events: Event Notifications can be delivered via SNS. 
+	+ Resiliency: 
+		- High reliability: Multi-AZ deployment with sync replication. 
+		- Replication capabilities: Sync replication to multiple nodes across AZs. 
+		- How can MemoryDB 4 Redis facilitate development of loosely coupled app architectures: Loose coupling is achieved by leveraging MemoryDB 4 Redis Streams to decouple microservices that need to communicate async. 
+	+ Perf: 
+		- High-frequency trading platform, low latency and high throughput: Read Replicas. 
+		- Basic architecture: Primary-Replica(s). Fully managed in-mem DB service built. Data replicated accross AZs. 
+	+ Cost:  
+		- On-demand nodes: pay by the instance hour with no long-term commitments. 
+		- Nodes with data tiering use solid state drives (SSD). 
+		- Reserved nodes: 1 | 3 year commitment. 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ App Integration _________________ 
+
+* Autoscaling: 
+	+ Security: 
+		- Necessary permissions to perform its ops: Service-linked roles. 
+	+ Resiliency: 
+		- Fleet of EC2 instances behind an ALB. App must remain available during instance failure: By auto launching new instances to replace failed ones. 
+		- EC2 instances behind ALB must gracefully handle surges in traffic: By launching On-Demand instances. 
+		- Prevent cascading failures: By using multiple smaller ASGs. 
+	+ Perf: 
+	+ Cost: 
+
+* API GW: 
+	+ Security: 
+		- Ensure data transmitted through APIGW is enc: TLS (transit), KMS (cache). 
+		- Ensure BOTH client & server authN each other during TLS handshake: Enable Mutual TLS (mTLS) authN. 
+		- Implement CUSTOM authN for APIGW: Lambda Authorizer. 
+		- APIGW provide access to 3rd-party devs. Track & control usage of APIs: APIGW API Key. 
+		- I expose APIs to apps. Ensure fair usage: APIGW Usage Plans. 
+		- APIGW compliance & debugging, maintain detailed logs of all API activities: APIGW CloudWatch Logs integration. 
+	+ Resiliency: 
+		- How does API GW support REST & WebSocket APIs through the same API GW: By implementing multiple deployment stages. 
+		- Handle traffic spikes: Enable throttling policies with burst & rate limits. 
+		- Handle errors & avoid cascading failures: ALREADY has built-in fault tolerance. 
+		- Test API changes with a % traffic before fully deploying updates: Canary deployments. 
+	+ Perf: 
+		- APIGW basic architecture: Acts as front door for apps to access data, business logic, or functionality from backend, such as workloads on EC2, Lambda, web apps. 
+	+ Cost: 
+
+* ELB: 
+	+ Security: 
+		- ALB, ensure only legit traffic reaches app: Assign SG that allows only necessary inbound ports (HTTP(S)) and allows all outbound traffic. 
+		- User authentication at ALB level with Cognito: Use Cognito to create a user pool. Configure authN action on listener rule. 
+		- ALB, ensure data is enc transit AND optimize perf of backend: Use ALB's SSL termination feature to handle the handshake & decrypt the traffic before sending it to the backend. 
+		- ALB monitor detailed traffic: Access Logs about requests sent to ALB. 
+		- Ensure data transmitted between clients & NLB is secure: Use TLS termination on the NLB. 
+		- Enhance security; restrict incomming traffic to NLB: Configure SGs for the target EC2 instances. 
+		- NLB ensure only specific crypto ciphers TLS: NLB supports specific TLS ciphers by default but does not allow custom suites. 
+		- NLB for TCP traffic. Maintain detailed logs of TLS requests made to the NLB: Access Logs can be stores in S3, capture detailed info about TLS requests. 
+		- GWLB global app. Ensure secure & private connectivity between virtual appliances and app servers across VPCs: Use GWLB endpoint. 
+		- I am configuring GWLB for multi-account. Ensure only specific accounts, roles, users can create endpoints to the service behind the GWLB: GWLB > Actions > "Allow pricipals" > Enter ARNs of service consumers. 
+		- GWLB to manage traffic accross global data centers. Role of GENEVE proto: GENEVE protocol is used to *E*ncapsulate and fw traffic to the virtual appliances for processing. 
+		- GWLB monitor info about IP traffic to/from netw ifs: VPC Flow Logs. 
+	+ Resiliency: 
+		- How does ALB detect unhealthy instances: By implementing Target Group Health Checks. 
+		- ALB must continue serving traffic even if AZ fails: Cross-Zone load balancing. 
+		- ALB must route HTTP & HTTPS to different Target Groups: Multiple listeners. 
+		- ALB ensure data enc in transit ALSO optimize perf of backend: SSL termination to handle handshake & decrypt traffic before sending it to backend. 
+		- Monitoring & logging in ALB (detailed traffic, potential theats): Access Logs capture detailed info about requests sent to ALB. 
+		- ALB across AZs. Ensure traffic is load balanced properly if instances fail: Integrate with Auto Scaling. 
+		- CloudWatch metric of ALB with ASG relevant to codes being returned from backend: HTTPCode_Target_5XX_Count. 
+		- NLB deployed across subnets/AZs must remain available even if AZ fails: Enable cross-zone LB. 
+		- NLB must detect unhealthy registered targets: Implementing Target Group Health Checks. 
+		- NLB must adapt capacity as EC2 instances scale: By registering ASG with the NLB Target Group. 
+		- How to monitor NLB traffic for security anomalies: VPC Flow Logs. 
+		- NLB TCP traffic detailed logs of TLS requests (Access Logs): Access Logs can be stored in S3. Capture detailed info about TLS requests made to NLB. 
+	+ Perf: 
+		- ALB basic architecture: Operates at layer 7, routes traffic based on content. 
+		- ALB for HTTP(S), NLB for TCP. Most efficient way to combine them: Place ALB behind NLB. 
+	+ Cost: 
+
+* AppFlow: 
+	+ Security: 
+		- Integration with Secrets Manager: Store src/dst connection details. 
+		- Monitor data flows: Use CloudWatch to monitor exec history of flows and get metrics about flow runs. 
+	+ Resiliency: 
+		- Built-in redundancy: ALREADY replicates Flows across AZs. 
+		- Flow metrics: CloudWatch. 
+	+ Perf: 
+		- Basic architecture: Allows users to set up bidirectional data flows between SaaS apps & AWS (no code). 
+	+ Cost: 
+
+* SNS: 
+	+ Security: 
+		- Ensure messages are enc at rest (SSE): KMS. 
+		- Healthcare org sends notifications containing patient data. Ensure data is protected rest/transit: Use SNS Message Data Protection to audit, mask, or block sensitive info. 
+		- IAM: Create IAM user for each authorized personnel and attach a policy allowing sns:Publish action to the specific Topic. 
+		- Monitoring: Use CloudWatch metrics to monitor # of messages published and # of SUC deliveries. 
+	+ Resiliency: 
+		- SNS Topic must continue working during subscriber endpoint failure: ALREADY has built-in reliability mechanisms. 
+		- Handle errors & avoid cascading failures: ALREADY has built-in fault tolerance. 
+		- SNS Topic is failing to deliver messages. How can SNS help capture these failed messages: DLQ. 
+		- Observability into message delivery: CloudWatch & X-Ray. 
+	+ Perf: 
+	+ Cost: 
+
+* SQS: 
+	+ Security: 
+		- Enc rest: Enable SSE using KMS. 
+		- Ensure SQS accessed ONLY from within VPC: Set up a VPC Interface Endpoint using PrivateLink. 
+		- Detailed logging all interactions with SQS Queues: Use CloudTrail to log SQS API calls. 
+	+ Resiliency: 
+		- Reduce empty responses when polling: Long Polling. 
+		- Ensure simultaneous processing of messages is coordinated properly: Message Locking with Visibility Timeouts. 
+		- Ensure at-least-once processing: Message Locks & Visibility Timeouts. 
+		- FIFO order: FIFO Q. 
+	+ Perf: 
+	+ Cost: 
+
+* MQ: 
+	+ Security: 
+		- Enc: KMS (rest), TLS (transit). 
+	+ Resiliency: 
+		- Ensure message state sync across brokers: Configure MQ brokers with Mirrored Queues feature to maintain identical copies of messages accross multiple brokers. 
+		- Configure to manage message redelivieries: Enable DLQ to capture messages that exceed specified redelivery count & handle them separately. 
+		- Prioritize processing of certain messages: Prioirity Dispatch Policies. 
+		- Auto manage storage: Implement Message Eviction strategies. 
+	+ Perf: 
+		- Basic architecture: Managed message broker for ActiveMQ & RabbitMQ. 
+	+ Cost: 
+
+* EventBridge: 
+	+ Security: 
+		- Monitor perf & health: CloudWatch Metrics: # events ingested, delivered, matched. 
+	+ Resiliency: 
+		- Serverless Event Bus. 
+		- Retry failed events: Enable Event Replay to re-submit unprocessed events. 
+		- Filter unwanted events: Implement Event Filter Rules. 
+		- Capture failed event processing for analysis: SQS DLQ. 
+	+ Perf: 
+		- Basic architecture: Serverless Event Bus to connect apps using data from various sources. 
+	+ Cost: 
+
+* SES (email): 
+	+ Security: 
+		- Enc email content: TLS (transit). 
+		- Track events: Event Publishing. 
+		- High deliverability rate, avoid being marked as spam: Reputation Dashboard. 
+	+ Resiliency: 
+		- Ensure high delivery rates: Built-in deliverability features & integration with CloudWatch. 
+		- How mitigates against viruses: Integrates with 3rd-p virus scanning providers. 
+		- Test how emails will perform: Virtual Deliverability Manager to simulate. 
+		- Test how email will render across providers: Mailbox Simulator. 
+	+ Perf: 
+		- Basic architecture: Managed service to send/receive emails without need to manage email servers. 
+	+ Cost: 
+
+* Step Functions: 
+	+ Security: IAM for Fine-Grained Access Control. 
+	+ Resiliency: 
+		- Catch & handle errors: Configure States: Retry, Catch, Fallback. 
+		- Monitor executions visually: Step Functions Console. 
+	+ Perf: 
+		- Notify users about status of their orders: SNS. 
+	+ Cost: 
+
+* Simple Workflow Service (SWS): 
+	+ Security: 
+		- Monitor workflows: Built-in Metrics with CloudWatch to monitor exec & perf. 
+	+ Resiliency: 
+		- Ensure continuity: Redundantly running tasks across multiple AZs. 
+		- Operational insights: CloudWatch. 
+	+ Perf: 
+		- Basic architecture: Managed workflow service to build, run, scale bg jobs that have parallel/sequential steps. 
+	+ Cost: 
+
+* Managed Apache AirFlow (MWAA): 
+	+ Security: 
+		- Monitoring: CloudWatch Metrics & Logs. 
+	+ Resiliency: 
+		- Ensure continuity: ALREADY auto retries failed tasks. 
+		- Deploy across AZs: Enable Multi-AZ deployment. 
+	+ Perf: Basic architecture: MWAA provides web interface to visualize & monitor workflows. 
+	+ Cost: 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ Data & ML _________________ 
+
+* Kinesis: 
+	+ Security: 
+		- Use IAM roles for temp credentials for my producer/client apps that access the Stream. 
+		- Data both at rest & in transit can be encrypted in Streams. 
+	+ Resiliency: 
+		- Data records are ALREADY replicated across multiple AZs. 
+		- Auto scale Kinesis Data Stream for fluctuations in workload: Enable Auto Scaling on Data Streams based on utilization. 
+		- Seasonal spikes in Data Streams: Choose On-Demand mode to eliminate over-provisioning. 
+		- Need to retain streaming data for compliance. What is the max retention period: 365d. 
+	+ Perf: 
+		- For up to 20 consumers enable enhanced fan out. 
+		- Kinesis Agent: Standalone Java SW app to collect/send data to Data Streams & Firehose. 
+	+ Cost: privisioned capacity mode if I know what the throughput requirement is for my data. 
+
+* MSK (Kafka): 
+	+ Security: 
+		- Never put confidential information into tags. 										// https://docs.aws.amazon.com/msk/latest/developerguide/security.html
+		- Enc: KMS (rest), TLS (transit). 
+		- How to enable TLS for ZooKeeper: Configure it in the MSK Cluster Settings and it will auto apply to ZooKeeper. 
+	+ Resiliency: 
+		- ALREADY has automated backups & multi-zone replication. 
+		- How can I auto detect & replace failed brokers: MSK ALREADY has auto healing to auto replace uinhealthy brokers. 
+		- HA: By deploying Kafka clusers across AZs. 
+		- DR: ASYNC replication across regions. 
+		- Ensure resilience of Zookeeper nodes: (ALREADY) By Tightly integrating & managing Zookeeper nodes as part of MSK clusters. 
+	+ Perf: 
+		- Recommended number of partitions per broker, right number of brokers per cluster. 						// https://docs.aws.amazon.com/msk/latest/developerguide/bestpractices.html
+		- Basic architecture: Multi-node Kafka cluster with separate Zookeper nodes, fully managed. 
+		- Analyze perf & troubleshoot issues: Enable Broker Log exports to S3. 
+	+ Cost: use ASG, choose the right instance type, choose EBS if possible (vs PIOPS), enable compression. 					// https://www.stream.security/post/9-best-practices-to-reduce-your-aws-msk-apache-kafka-costs
+
+* Glue: 
+	+ Security: 														// https://docs.aws.amazon.com/glue/latest/dg/security.html
+		- Enc data at rest. 
+		- TLS enc data in transit. 
+		- Use IAM and KMS. 
+		- Implement network isolation using VPC Endpoints & restricting access using IAM roles+policies. 
+		- Secure Bookmarks: Enc job Bookmark data using KMS. 
+	+ Resiliency: 
+		- Ensure continuity of ETL jobs: ALREADY has auto retry of failed jobs. 
+	+ Perf: enable workload partitioning. 												// https://docs.aws.amazon.com/glue/latest/dg/bounded-execution.html
+	+ Cost: 
+		- Choose the right worker type, configure jobs to auto-scale. 									// https://docs.aws.amazon.com/whitepapers/latest/aws-glue-best-practices-build-performant-data-pipeline/building-a-cost-effective-data-pipeline.html
+		- ETL jobs: By allocating DPUs for optimal scaling. 
+
+* EMR: 
+	+ Security: 
+		- Can integrate with IAM, KMS, encryption at-rest and transit, I can isolate the cluster, logging with CloudTrail & CloudWatch. 
+		- Patching: EMR clusters are ephemeral (immutable infra). 
+		- Enc HDFS: Transparent Data Enc (TDE) with KMS. 
+		- Logging & monitoring: CloudWatch for real-time monitoring of metrics, CloudTrail for tracking user activity & API usage. 
+	+ Resiliency: 
+		- Design for auto failover between AZs. 											// https://docs.aws.amazon.com/emr/latest/ManagementGuide/disaster-recovery-resiliency.html
+		- Improve availability of EMR clusters: By enabling multiple Primary Nodes for HDFS NameNode redundancy. 
+		- Improve reliability of resource management for EMR clusters running Spark jobs: By leveraging YARN as the cluster Resource Manager. 
+		- Improve Fault Tolerance: Multiple AZs. 
+		- Resilient access to S3 data: Use EMRFS. 
+		- Monitor health & reliability: CloudWatch. 
+	+ Perf: 
+		- Use adaptive query execution for Spark. 												// https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-spark-performance.html
+		- Basic architecture: Cluster of EC2 instances, 1+ Master Nodes for coordination, Core Nodes for data storage and processing, Task Nodes for additional proc. 
+	+ Cost: use spot instances. 
+
+* Glue Databrew: 
+	+ Security: 
+		- Data can be enc at rest with KSM. Provides SSL in transit. 
+		- Data security & enc: KMS (rest), TLS (transit). 
+	+ Resiliency: 
+		- Config jobs for 1+ retries. 
+		- Reliably prepare data at scale for analytics: ALREADY auto retries failed DataBrew jobs to ensure completion. 
+		- Customize # of auto retry attempts for failed jobs: By setting the MAX # of retries per job in DataBrew settings. 
+	+ Perf: Basic architecture: Serverless, visual data preparation tool to clean & normalize data (no code). 
+
+* Lake Formation:
+	+ Security: 
+		- Basic authentication: IAM users & roles. 
+		- Audit logging: Provides built-in Audit Logging: tracks user activities & data access. 
+		- Cell & row-level security: Supports it through Granural Access Policies applied directly to data cells/rows. 
+		- Tag-based Access Control: Allows it where Access Policies can be applied based on tags assigned to data lake resources. 
+	+ Resiliency: 
+		- Cross-Region Data Replication (S3). 
+		- Secure, reliable access to data in ther Data Lake built on S3: Enable Consistent Access Control & Auditing across distributed S3 data. 
+	+ Cost:  
+		- 3 main drivers of cost: Compute, storage and outbound data transfer. 
+		- Strategies: 
+			' On-Demand | Spot | Reserved Instances. 
+			' Instead of routing traffic over the internet, use VPC endpoints. 
+
+* Athena: 
+	+ Security: 
+		- Enc query results. Set S3 bucket IAM policy to only allow enc connections (HTTPS/TLS). 
+		- AuthN mechanism to manage access for user groups: Relies on IAM. 
+		- Working with enc data in S3: Supports querying data enc with SSE-KMS or SSE-C. 
+	+ Resiliency: 
+		- Serverless. 
+		- Reliably query a large dataset in S3: Athena. 
+	+ Perf: Partition data. Data bucketing. Compress data. Balance between number of files & their size. 
+	+ Cost: Pay-per-Query. 
+
+* QuickSight: 
+	+ Security: I can enc data at rest. In transit always enc. 
+	+ Resiliency: 
+		- Serverless. 
+		- Enable business analysts to reliably generate insights from S3: QuickSight. 
+
+###############################################
+
+
+
+
+
+
+_________________ Migration & Transfer _________________ 
+
+* Elastic Disaster Recovery (DR): 
+	+ Security: 										// https://docs.aws.amazon.com/drs/latest/userguide/security.html
+		- The Replication Server should only be accessed from source servers CIDR + proper SG. 
+		- Only expose allowed ports to internet. 
+		- Activate Shield in AWS Account. 
+		- DR Console: Provides detailed insights into job execution & recovery instance details. 
+		- Term for "process of reverting systems back to primary env after failover test": Failback. 
+		- Ensure EBS volumes enc: Enc data of source instances. DRS will auto replicate the enc to EBS. 
+		- Manage netw acces for replicated EC2 instances: ALREADY auto applies SGs from source instances. 
+	+ Resiliency: 
+		- EDR Console: Provides detailed insights into job exec & recovery instance details. 
+		- Ensure reliable replication of server state including apps, configs, FS with min RPO/RTO: Use EDR block replication to replicate server volumes incrementally at the block level. 
+	+ Perf: 
+		- Large-scale video content: FSx for Lustre. 
+	+ Cost: 
+		- EBS Snapshot Lifecycle Policies. 
+		- Online transaction processing system (retail), netw design: Direct Connect. 
+
+* DataSync:
+	+ Security: 
+		- KMS. 
+		- Ensure data security during transfer: Enable SSE in S3, rely on DataSync's default enc transit. 
+	+ Resiliency: 
+		- What happens in case of an AZ failure: The task will also fail. 
+		- Visibility into transfer status & errors at file level: Enable DataSync File Transfer Logs to CloudWatch Logs for detailed file status. 
+	+ Perf: 
+		- Frequent, high-speed sync of large video files on-premises & AWS: Parallel transfers. 
+		- For transfering storage from on-prem to EFS: Configure DataSync to transfer data directly to EFS (no intemediate storage needed). 
+	+ Cost: Incremental data transfer. 
+
+* Migration Hub:
+	+ Security: 
+		- IAM roles. 
+		- Ensure migration process adheres to regulatory standards: CloudTrail. 
+	+ Resiliency: 
+		- Multi-tier app: Sequentially migrate app tiers, start with most critical to minimize downtime. 
+	+ Perf: Strategy Recommendations. 
+	+ Cost: Monitor and identify delays & issues with the migration. 
+
+* Application Discovery Service: 
+	+ Security: 
+		- KMS. 
+		- IAM: Roles & Policies define & control what actions users & services can perform. 
+		- Logging: CloudTrail. 
+	+ Resiliency: 
+		- Monitoring: Enable CloudWatch metrics such as Agent Health. 
+	+ Perf: 
+		- CDN: Identify underutilized on-prem resources. 
+		- Purpose of Agents: Optional SW apps installed on-prem to collect & send config & usage data. 
+	+ Cost: Identify over-provisioned on-prem resources. 
+
+* Application Migration Service (AWS MGN): 
+	+ Security: 
+		- KMS. 
+		- Logging: CloudWatch: real-time logging of all actions & changes made during migration process. 
+	+ Perf: 
+		- High-traffic multiplayer game: Global Accelerator to optimize netw paths. 
+	+ Cost: S3 Glacier for infrequent data. 
+
+* Transfer Family: 
+	+ Security: 
+		- MFA. 
+		- Does not support FTP (only SFTP, FTPS). 
+		- Server Security Policies: Configure Transfer Family to use a custom security policy that aligns with specific security reqs. 
+		- AS2 Document Exchange: Use Transfer Family to set up an AS2 server in the cloud, directly integrated with S3. 
+	+ Resiliency: 
+		- AZ-level redundancy is ALREADY built in. 
+	+ Perf: 
+		- Minimize netw latency for SFTP servers: Route 53: Latency-based routing. 
+	+ Cost: Automated lifecycle policies to move older data to cheaper storage classes. 
+
+* Database Migration Service (DMS): 
+	+ Security: 
+		- Use IAM. ALREADY uses TLS for endpoints. ALREADY uses KMS.  
+		- Task Logs: Access them via M Console, CLI | API for details. 
+	+ Resiliency: 
+		- Critical transactional DB: DMS Multi-AZ replication instance for redundant replication servers. 
+	+ Perf: 
+		- CRM: Aurora. 
+		- Key features & limitations: Supports migration of relational, non-relational, & DWH. Both full load & cont. 
+		- Time Travel Logs: Store, enc, access -> S3. 
+		- Cont repl: Change Data Capture (CDC) feature. 
+	+ Cost: Aurora Serverless. 
+
+* Mainframe Modernization: 
+	+ Security: 
+		- ALREADY provides IAM-protected resources. Use MFA, CloudTrail, Macie. 
+		- Perfect Forward Secrecy (PFS): Configure env to use TLS protos & cipher suites. 
+	+ Resiliency: Multi-AZ deployment. 
+	+ Perf: Scale horizontally, Optimize instance type, Pool connections with RDS Proxy, Tune the DB. 									// https://aws.amazon.com/blogs/mt/scaling-for-performance-with-aws-mainframe-modernization-and-micro-focus/
+	+ Cost: Lambda. 
+
+* Snow Family (storage): 
+	+ Security: 
+		- Add users & manage access on Snowball Edge: IAM roles & policies. 
+	+ Perf: 
+	+ Cost: 
+
+###############################################
+
+
+
+
+
+
+
+
+_________________ Mgmt & Gov _________________ 
+
+* CloudFormation (CFN): 
+	+ Security: 
+		- Enable termination protection on the stack. 
+		- Use it to define & manage SGs, IAM roles. 
+		- Min nec perms: Define specific IAM roles for each type of resource in the Template, grant only nec perms. 
+		- DB creds: Secrets Manager. 
+		- Track & monitor events: CloudWatch Events to detect & react to changes in Stacks. 
+	+ Resiliency: 
+		- Stacks occasionally fail during creation due to throttling errors. How can CFN be configured to reliably provision the stacks: Retry Policy with exponential backoff to auto re-attempt failures. 
+	+ Perf: Reuse templates to replicate stacks in multiple environments. 
+	+ Cost: Verify quotas for all resource types. 
+
+* CDK (Cloud Development Kit (v2)): 
+	+ Security: 
+		- Manage IAM roles: CDK allows definition & association of custom IAM roles to resources within code. 
+	+ Resiliency: 
+		- Ops team needs visibility into resources created via CDK: CDK can generate CFN template for any CDK app enabling resource tracking. 
+	+ Perf: 
+		- Key components: Allows me to define Cloud Resources in my fav programming lang -> CFN Templates. 
+
+
+* CloudWatch:
+	+ Security: 
+		- ALREADY uses end-to-end encryption of data in transit. 
+		- Protected Health Information: Enable Data Protections Policies. 
+	+ Resiliency: 
+		- PROD app experiencing occasional perf issues. Ops team needs to monitor & troubleshoot: CloudWatch Dashboards to correlate perf metrics. 
+	+ Perf: 
+		- Ensure I can track perf & health of resources: CloudWatch Metrics = perf, Alarms = to trigger notifications, Logs = storing app logs. 
+		- Simulate user behavior/interactions: Canaries. 
+	+ Cost: Be aware of these metrics: Custom, Detailed Monitoring, Embedded, API Requests, Metric Streams. 
+
+
+* X-Ray: 
+	+ Security: 
+		- Enc Trace data with KSM, restrict access with IAM roles. 
+		- Ensure PII is NOT exposed: Configure Sampling Rules to exclude those requests | segments. 
+
+
+* AMP (Amazon Managed Service 4 Prometheus):
+	+ Security: 
+		- Use IAM service-linked roles. 
+		- Use IAM roles & policies. 
+		- Integration with CloudTrail: Cofigure CloudTrail to capture all API calls made to AMP -> S3. 
+	+ Resiliency: 
+		- For HA send data from multiple Prometheus Agents and enable de-duplication. 
+		- Key reliability considerations: Use IAM Roles & Policies to control access to AMP and its data. 
+	+ Cost: Reduce ingestion rates by reducing collection frequency or number of active series ingested. 
+
+* Amazon Managed Grafana: 
+	+ Security: 
+		- Use short-lived API keys. 
+		- Restrict access: (SSO) Id Center or 3rd party IDp. 
+		- Implement Customer-Managed perms to provide Fine-Grained Access Control tailored to specific user groups & roles. 
+
+* Trusted Advisor: 
+	+ Security: 
+		- Assess your AWS environment against security standards and best practices. 
+	+ Resiliency: Examine your AWS environment to check for redundancy shortfalls and overused resources. 
+	+ Perf: Analyze usage and configuration of your AWS environment to improve speed and responsiveness of your applications. 
+	+ Cost: Identify unused resources. 
+
+* Launch Wizard: 
+	+ Security: 
+		- Launch Wizard for EKS provides guided setup for creating K8 cluster, with options for config SGs & AIM roles. 
+		- How are IAM roles/perms are managed: Launch Wizard requires either exising role or creating a new one during setup. 
+	+ Resiliency: ALREADY spans multiple AZs. 
+
+* Systems Manager: 
+	+ Security: ALREADY uses IAM service-linked roles. 
+	+ Perf: Use Fleet Manager to view performance data about my managed nodes in real time. 
+	+ Cost: Take recommended actions regarding the cost of my app in Application Manager. 
+
+* Service Catalog: 
+	+ Security: 
+		- Use template constraints to limit the parameter values of products. 
+		- IAM roles. 
+	+ Resiliency: Use self-service actions in my catalogs. 
+	+ Perf: Use ClodWatch to monitor and see how the service is performing. 
+
+* Health Dashboard: 
+	+ Security: 
+		- Min perms DevOps team: Specific perms to access PHD and receive notifications. 
+	+ Resiliency: 
+		- Critial app cannot experience any downtime. Ops team need to proactively monitor service health of underlying AWS infra: Personal Health Dashboard provides real-time notifications, ongoing status, historical info on AWS service health. 
+	+ Perf: 
+		- Key Features: Real-time Alerts on AWS service Outages, Scheduled Maintenance, that may impact my infra. 
+
+* Compute Optimizer: 
+	+ Security: 
+		- Offers recommendations on instance types/sizes based on usage patterns BUT DOES NOT address security. 
+		- Trusted Access: Enable it to analyze data from other services, BUT does not influence security. 
+
+* Organizations: 
+	+ Security: 
+		- Manage IAM Policies accross org: Use Service Control Policies (SCPs). 
+		- CloudTrail: Implement centralized CloudTrail in Master Account and rely on it to capture all events accross Member Accounts. 
+
+* Control Tower: 
+	+ Security: 
+		- Integrate with IAM Id Center (SSO): Configure IAM Id Center (SSO) to manage user ids and access centrally, integrate it with Control Tower for automated account provisioning governance. 
+
+* Proton: 
+	+ Resiliency: 
+		- App requires daily backups to S3. Infra is defined in Proton template: Use a Proton component to define a periodic backup job that copies data to S3. 
+	+ Security: 
+		- Ensure all deployment activities & changes are logged: Enable CloudTrail Logs -> S3. 
+		- Best practices: Built-in security controls for env & service Templates. 
+
+###############################################
+
+
+
+
+
+
+
+
+
+
+
+
+_________________ Security _________________ 
+
+* IAM: 
+	+ Security: 
+		- Min nec perms: Define specific IAM Roles for each type of resource in Template, grant only nec perms. 
+
+* Directory Service: 
+	+ Security: 
+	+ Resiliency: ALREADY multi-AZ. 
+	+ Perf: 
+	+ Cost: 
+
+* Verified Permissions: 
+	+ Security: 
+	+ Resiliency: ALREADY multi-AZ. 
+	+ Perf: 
+	+ Cost: 
+
+* CloudTrail: 
+	+ Security: I can enable SSE-KMS enc for logs stored in S3. 
+	+ Perf: 
+	+ Cost: 
+
+* Security Lake: 
+	+ Security: Integrated solution to aggregate, analyze, respond to sec threats hybrid env. Centralize sec data from various sources, provide advanced threat detection & cont monitoring: Security Lake + GuardDuty. 
+
+* WAF: 
+	+ Security: Web App; static content through CloudFront, dynamic content API GW. Protect against SQL injection, XSS, control bot traffic: WAF + CloudFront + API GW. 
+
+* Shield: 
+	+ Security: Customize DDoS detection & mitigation to treat resources as a unified group for more efficient protection: Shield Advanced + Protection Groups. 
+
+* Netw FW: 
+	+ Security: Advanced traffic filtering @ VPC. Protect against internet-based threats: Inbound/outbound web filtering for unencrypted web traffic. ACLs and stateful inspection. 
+	+ Resiliency: App requires stateful FWs between AZs redundantly: Deploy Netw FW in Active-Active HA pair across AZs. 
+
+* Secrets Manager: 
+	+ Resiliency: Allows enabling auto cross-region replication of secrets to crate standbys. 
+
+###############################################
+
+
+
+* Shared Responsibility Model: 
+	+ Security: AWS OF the Cloud, Customer: IN the Cloud. 
+
+
+
+* Models of Disaster Recovery: 
+|---------------------	Active/Passive ---------------------------------|
+Backup & Restore 		Pilot Light 	Warm Standby			Multi-site Active/Active
+Hours			10s m		m				Real-time 
++ Proviosion all 		+ Data live. 	+ Always running but smaller. 	+ Zero downtime. 
+resources after event. 	+ Scale after event. 	+ Business Critical. 			+ ~0 data loss. 
++ $. 			+ $$. 		+ $$$. 				+ $$$$.
+
+
+
+@Resiliency: 
+	` Reliability aspects managed by AWS: Replicating data between AZs + Maintaining physical HW in Data Centers. 

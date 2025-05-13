@@ -10,11 +10,12 @@ ____________________________________ S3 _______________________________________
 
 * Unlimited object storage. 
 * Serverless. 
-* Object: 
+* Object: 						// Concurrent connections: simultaneous request of multiple parts of an object. 
 	- Key (name): value (data). 
 	- Version. 
 	- Metadata. 
 * Buckets: 
+	- Unlike IAM Policies, which are attached to AWS users, Resource Policies are applied to the resource (bucket), rules can be added for anonymous/public users. 
 	- Hold objects (and simulate /folders/). 
 	- Naming: 
 		' Similar to (and used in) URLs. 
@@ -26,14 +27,14 @@ ____________________________________ S3 _______________________________________
 		' Invalid postfixes: -s3alias. 
 	- Restrictions: 
 		' 100 buckets. SR: 1,000. 
-		' Use multi-part upload for files > 100MB. Process: create-miultipart-upload, get Upload_ID, upload-part ..., complete-multipart-upload (provide json with etags). // Parts can be numbered 1..1000. 
+		' Use multi-part upload for files > 100MB. Process: create-multipart-upload, get Upload_ID, upload-part ..., complete-multipart-upload (provide json with etags). // Parts can be numbered 1..1000. 
 	- Types: 
 		' General Purpose: 
 			; Flat. 
 			; Cannot be used with S3 Express One Zone storage class. 
 		' Directory: 
 			; Only for S3 Express One Zone storage class. 
-			; single-digit millisecond performance on PUT and GET. 
+			; Single-digit millisecond performance on PUT and GET. 
 			; Limit: 10. 
 	- Objects: 
 		' Resources that represent data, not infra. 
@@ -42,7 +43,7 @@ ____________________________________ S3 _______________________________________
 		' Checksums: ensure integrity of a file. 
 		' Metadata: 
 			; System defined: 
-				` Content Type. 
+				` Content Type (I can modify it). 
 				` Cache Control. 
 				` Content Disposition. 
 				` Content-Encoding.  
@@ -56,7 +57,7 @@ ____________________________________ S3 _______________________________________
 			; Retention period. 
 			; Legal hold. 
 		' URI: s3://. 
-		' CLI: 
+		' CLI: 						// $ aws configure set region 
 			; s3. 
 			; s3api 
 			; s3control: access points. 
@@ -64,13 +65,13 @@ ____________________________________ S3 _______________________________________
 		' Requests: 
 			; Virtual hosted. 
 			; Path-style. 
-		' Storage Classes: 
+		' Storage Classes: 				// Provide varying level of Data Access, Resiliency, Cost. 
 			; Durability: 99.999999999% 
 			; Standard (default): fast, available, durable. 
-				` Availability: 99.99% 
+				` Availability: 99.99% 			// Replicated accross 3 AZs. 
 				` Retrieval: milliseconds. 
 				` Throughput: frequently or real-time access. 
-				` Pricing per: GB, request. 
+				` Pricing per: GB, request. 			// I can make object publicly available. 
 			; Reduced Redundancy Storage (RRS): legacy. 
 				` Noncritical data. Not recommended. 
 			; Intelligent Tiering: uses ML, extra fee to analyze. 
@@ -86,34 +87,37 @@ ____________________________________ S3 _______________________________________
 				` Lowest latency. 10x faster than Standard. 
 				` 50% cheaper than Standard. 
 				` Stored in Directory bucket. 
-			; Standard-IA (Infrequent Access): fast, cheaper if access > once/month. Fee to retrieve. 
+			; Standard-IA (Infrequent Access): fast, cheaper if access < once/month. 
 				` Availability: 99.9%. 
 				` Disaster recovery, backups, long-term. 
-				` Retrieval fee. 
+				` Retrieval fee. 					// Retrieval: milliseconds. 
 				` Min 30 days. 
-			; One-Zone IA: 20% cheaper. Data CAN be lost. 
+				` 3 or more AZs. 
+				` Min 128KB per object. 
+			; One-Zone IA. Data CAN be lost. 
 				` Availability: 99.5%. 
 				` 20% cheaper than Standard-IA. 
 				` Retrieval: milliseconds. 
 				` For: backup on-prem data, data than can be recreated if AZ disaster, non-mission crtitical. 
-				` Pricing: per GB, per request, retrieval fee, min 30 days. 
-			; Glacier Instant Retrieval: long-term cold storage. Get data instantly. 
+				` Pricing: per GB, per request, retrieval fee, min 30 days, min 128 KB per object. 
+			; Glacier-Instant (Retrieval): long-term cold storage. Get data instantly. 
 				` Rarely accessed data. 
 				` Availability: 99.9%. 
-				` 68% cheaper than Standar-IA. 
+				` 68% cheaper than Standard-IA. 
 				` For: data accessed one per quarter. Use cases: image hosting, online file-sharing apps, medical imaging, health records, news media assets, satellite imaging. 
 				` Retrieval: milliseconds. 
-				` Pricing: per GB, per request, retrieval fee, min 90 days. 
+				` Pricing: per GB, per request, higher retrieval fee, min 90 days. 
 				` NOT VAULT. 
-			; Glacier Flexible: 
+			; Glacier Flexible: 						// Cannot be publicly available. 
 				` Retrieval Tiers: 
 					° Expediated: 1-5m, Lim: 250MB. 
 					° Standard: 3-5h, default. 
 					° Bulk: 5-12h. 
 				` Pricing: per GB retrieved, number of requests, storage. 
+				` Min 40 KB per object, min 90 days. 
 				` I should store fewer and larger files due to the 40KB overhead. 
 				` NOT VAULT. 
-			; Glacier Deep Archive: 12h. 
+			; Glacier Deep Archive: 12h. 				// Cheapest. Can't be publicly available. 
 				` Retrieval Tiers: 
 					° Standard: 12-48h, default. 
 					° Bulk: 12-48h. 
@@ -126,13 +130,17 @@ ____________________________________ S3 _______________________________________
 * Glacier: "Vault". 
 	+ Deep Archive. 
 
-* Security: 
-	+ Bucket Policies: bucket-level permissions, JSON access policy. 
-	+ ACL (Access Control Lists): legacy. 
+* Security: 							// Block IP: policy statement with "Effect": "Deny". 
+	+ Bucket Policies: bucket-level permissions, JSON access policy. 	// Determines WHO. 
+		- Principal: users. 
+		- Resources: what. 
+		- Effect: allow | deny. 
+		- Action. 
+	+ ACL (Access Control Lists): legacy, not recommended. 
 		- Grant basic r/w. 
 		- To other accounts. 
 	+ Internetwork Traffic Privacy.
-		- PrivateLink (VPC Interface Endpoint): 
+		- PrivateLink (VPC Interface Endpoint [connect VPC to AWS services using PrivateLink]): 
 			` Private netw access. 
 			` Connect an ENI (Elastic Netw Interface) directly to other services, 3rd parties, accounts. 
 			` Fine-grain permissions. 
@@ -151,6 +159,7 @@ ____________________________________ S3 _______________________________________
 		- I must first create an analyzer at account level. 
 	+ Object Ownership. 
 	+ Access Points: named netw endpoints that are attached to buckets. 
+		- Netw origins: Internet | VPC. 
 	+ Access Grants: 
 		- Map identities in a Directory Service such as Active Directory. 
 		- Access Grants Instance: logical container. 
@@ -160,12 +169,12 @@ ____________________________________ S3 _______________________________________
 	+ In-Transit Encryption: over internet. 
 	+ Server-Side Encryption: 
 		- Always on by default. 
-		- SSE-S3: AES-GCM 256-bit. 
+		- SSE-S3: AES-GCM 256-bit. 			// AWS auto rotates regularly. 
 		- SSE-KMS: I manage the keys and use Key Mgmt Service. For compliance. Required: kms:GenerateDataKey permission. 
 		- SSE-C (Customer): I manage and provide the keys. 
 			` AES256. 
 			` AWS does not hold on to my key but they store a salted Hash-based Message Authentication Code (HMAC). 
-		- DSSE-KMS: Dual-layer server-side (also enc at client side). 
+		- DSSE-KMS: Dual-layer server-side (also enc at client side). 		// Generates a DEK. 
 	+ Client-Side Encryption: TLS 1.3. 
 		- When I encrypt my files before uploading them to S3. 
 	+ Compliance Validation. 
@@ -178,12 +187,17 @@ ____________________________________ S3 _______________________________________
 		' Strongly Consistent: they will never return old data to me, but I must wait 2 seconds to get it. 
 		' Eventually Consistent: they will give me the data currently available immediately, and after 2 seconds it will generally be up to date. 
 		' As of Jan 2020, S3 offers strong consistency for all r,w,d operations. 
+	+ How do I give access to an AWS user to my bucket: 
+		' Bucket policies work together with IAM policies. 
+	+ How do I allow public users access to my bucket? 
+		' Use a bucket Policy. 
 
 * Object Replication: 
-	+ Cross-Region. 
+	+ Cross-Region. 						// Data sync: S3 Replication Rules. 
 	+ Same-Region. 
 	+ Bi-Directional. 
 	+ Batch (on-demand). 
+	+ Cross-Account: secure data sharing enhancing collaboration and data management. 
 
 * Versioning: 
 	+ Recover more easily from unintended accidental delete/overwrite and failures. 
@@ -192,8 +206,8 @@ ____________________________________ S3 _______________________________________
 		- Versioned. 
 		- (Versioning) Suspended. 
 
-* Transfer Acceleration: 
-	+ Fast & secure transfer of files over long distances to my customers (bucket-level). 
+* Transfer Acceleration: 								// Using CloudFront (S3OriginConfig). 
+	+ Fast & secure transfer of files over long distances to my customers (bucket-level). 	// use_accelerate_endpoint 
 	+ Using CloudFront's distributed Edge Locations. 
 	+ Distinct endpoint: https://s3-accelerate (.dualstack = for also IPv6). 
 	+ Only for virtual-hosted style requests. 
@@ -201,6 +215,7 @@ ____________________________________ S3 _______________________________________
 
 * Presigned URLs: programmatically and temporarily provide access to upload/download objects (commonly private). 
 	+ $ aws s3 presign s3://bucket/object --expires-in <SECONDS> 
+	+ X-Amz-Date: timestamp signature created. 
 
 * Object Lambda Access Points: allows me to transform the output of S3 requests to present data differently. 
 	+ HEAD, GET, LIST. 
@@ -209,19 +224,20 @@ ____________________________________ S3 _______________________________________
 	+ Mount an S3 bucket to my local Linux fs for high-throughput. 
 	+ CAN: read, list, create new files. 
 	+ CANNOT: modify files, delete dirs, symlinks, file locking. 
-	+ Storage Classes: Standard, AI, One-Zone IA, RRS, Glacier Instant. 
+	+ Storage Classes: Standard, IA, One-Zone IA, RRS, Glacier Instant. 
 
 * Archived Objects: 
 	+ Rarely accessed, not in real-time. 
 	+ Archive Storage Classes: I manually move data. Glacier Flexible, Deep. 
 	+ Archive Acces Tiers: automatically. Intelligent-Tiering Archive access: minutes. Intelligent-Tiering Deep: 12+h. 
 
-* Requesters pay: 
+* Requesters pay: 					// Share valuable data without incurring the costs associated with data access, as researchers and users cover their own S3 usage fees. 
 	+ I (owner) pay for storage. 
-	+ Requesters pay for download. 
+	+ Requesters pay for download. 		$  --request-payer 
 	+ Header: x-amz-request-payer. 
+	+ Not allowed: SOAP requests. 
 
-* Batch Operations: 
+* Batch Operations: 					// Provide: list of objects in an S3 bucket | Inventory report manifest.json. 
 	+ Only for ClickOps. 
 	+ Billions of objects containing exabytes of data. 
 	+ Operations for each object: 
@@ -236,12 +252,15 @@ ____________________________________ S3 _______________________________________
 * Inventory: scheduled for audit history. 
 	- Daily or weekly. 
 	- I can specify metadata. 
+	- Report output formats: CSV, ORC, Parquet. 
 
-* S3 Event Notifications: allows a bucket to notify other services about S3 events. 
+* S3 Event Notifications: allows a bucket to notify other services about S3 events. 		// At least one, seconds. 
 
 * Storage Class Analysis: analyze access patterns and recommend objects to move between Standard and IA. 
+	+ Up to 1,000 analysis filters per S3 bucket. 
 
 * Lens: storage analysis tool for buckets. 
+	+ Data can be exported: CSV, Parquet -> another bucket | CloudWatch. 
 
 * Static Website Hosting: 
 	+ NO HTTPS! 
@@ -324,11 +343,12 @@ _____________________________________ API _____________________________________
 * Console: physical computer to input into a terminal. 
 * Shell: command-line program to input commands. 
 
-* AWS Credentials: key and secret. 
+* AWS Credentials: key and secret. 					// AWS_ACCESS_KEY_ID 
 
-* Exponential Backoff: to try again in 2 sec, 4, 8, 16, 32 ...
+* Exponential Backoff: to try again in 2 sec, 4, 8, 16, 32 ...			// To handle network failures more efficiently. 
 
 * STS (Security Token Service): temporary, limited-privilege credentials. 
+	+ Call returns: AccessKeyID, SecretAccessKey, SessionToken, and Expiration. 
 
 * When using API directly (HTTP) I must sign the request. 
 
@@ -338,6 +358,8 @@ _____________________________________ API _____________________________________
 	+ FIPS. 
 	+ Dualstack. 
 
+* Custom Domains: allows setting up custom domains. 
+
 ########################################################
 
 
@@ -346,10 +368,11 @@ _____________________________________ API _____________________________________
 
 
 
-_____________________________________ VPC _____________________________________
+_____________________________________ VPC _____________________________________		// Shared?: check OwnerID. 
 
 * Virtual Private Cloud: logically isolated virtual network. 
 	+ Region specific. 
+	+ CIDR block: range of IP addresses assigned to it. Size: from /16 to /28. 
 	+ I can create 5 VPCs per region (or request more). 
 	+ Every region comes with a default VPC. 
 		- IPv4 CIDR block: 172.31.0.0/16 (~65,536). 
@@ -364,23 +387,42 @@ _____________________________________ VPC _____________________________________
 	+ 5 IPv6 CIDR blocks (adjustable to 50). 
 
 * Core components: 
-	+ IGW (Internet Gateway): out to the internet. 
+	+ IGW (Internet Gateway): enables resources to connect to the internet. 
+		- Attach to a VPC. Are region resilient. 
+		- A VPC can have max 1 IGW. IGW can be attached to max 1 VPC. 
+		- A subnet is made public once a default route points to the IGW. 
+		- How to make subnet public: 
+			` Create IGW. 
+			` Attach it to VPC. 
+			` Create custom route table. 
+			` Configure default route. 
+			` Associate subnet with RT. 
 		- Allows inbound and outbound internet traffic to my VPC. 
 		- I need a route for IPv4 (0.0.0.0/0) and another for IPv6 (::/0). 
 		- Performs NAT for instances with public IPs. 
-	+ VPNGW (Virtual Private Gateway): to a private external netw. 
+	+ VGW (Virtual Private Gateway): to a private external netw. 		// Endpoint into my AWS account for a VPN connection. 
 	+ Route Tables. 
 		- Each subnet must be implicitly or explicitly associated with a SINGLE RT. 
 		- Multiple subnets can share the same RT. 
 		- MAIN RT: default. Cannot be deleted. 
 		- Target: local, IGW, VPG (to on-prem), NAT GW (IPv4 only), Egress-Only IGW, EC2 Instance, ENI, Carrier GW, Core Netw (to WAN), GW LB (for virtual appliances), Outpost Local GW, Peering Connection, TGW (Transit Hub). 
-	+ NAT GW: allows my private instances (VMs) to connect to services outside the VPC. 
-		- Per subnet. Costs. 
+	+ NAT GW: allows my private instances (VMs) to connect to services outside the VPC. 	// If I need to gain outbound access to the internet from my private netw, to re-map the private IPs. 
+		- So my internal instance in a private subnet can download patches from the internet. 
+		- IGW is still needed. 
+		- Gets deployed in a particular PUBLIC subnet/AZ. 
+		- Per subnet. Costs per hour and per GB of data transfered. 
+		- Bandwidth: 5 Gbps. Auto scales up to 100 Gbps. 
 		- Must associate EIP address. 
 		- Private connection mode: instances in private subnets to other VPCs or on-prem. 
+		- How to allow a private instance to download SW packages from the internet: 
+			` Public RT: 0.0.0.0/0 -> IGW. Associate with public subnet. 
+			` Deploy NAT GW to the public subnet. Allocate an EIP. 
+			` Private RT: 0.0.0.0/0 -> NAT GW. Associate with private subnet. 
+		- In production I would deploy multiple NAT GWs in different AZs. 
 	+ NACLs (Netw Access Control Lists): stateless virtual firewall at subnet level. 
 		- Allow & deny rules. 
 	+ Security Groups (SG): stateful virtual firewall for compute within a VPC, instance level. 
+		- Stateful firewalls are aware of requests' state. Allow all outbound requests, and their responses. 
 		- Associated with EC2 instances. 
 		- Allow rules only. 
 		- Up to 10,000 per region (default 2,500). 
@@ -405,9 +447,36 @@ _____________________________________ VPC _____________________________________
 		- Accross accounts and regions. 
 		- Star configuration. 
 		- Won't work if overlapping CIDR blocks. 
-		- Data transfer accross AZs/Regions costs. 
+		- $: Data transfer accross AZs/Regions. 
 
 
+* Subnet: a group of IP addresses in a VPC. 
+	+ Resides within a single AZ. 
+	+ Public | Private. 						// Determined by GWs. 
+	+ Block size: /16 - /28. 
+	+ First 4, and last IPs are reserved: 
+		- 0: Netw address. 
+		- 1: VPC Router. 
+		- 2: DNS. 
+		- 3: future use. 
+		- 255: Broadcast. 
+	+ Cannot overlap in same VPC. 
+	+ Optional /26 IPv6 CIDR. 
+
+* Routing: 
+	+ Every VPC has a VPC router: route traffic between subnets & I/O VPC. 
+		- The router has an interface in every subnet (netw+1 address). 
+	+ Route Table: set of rules the router uses to forward traffic (each rule = route). 
+		- All RTs have exactly 1 route by default: local. 
+	+ Every subnet is associated with 1 Route Table (Default by default). 
+	+ Multiple subnets can share a RT. 
+
+
+* DNS: 
+	+ Device private IPs will auto get DNS entry. 
+	+ DNS server can be accessed via second IP of CIDR block and 169.254.169.253. 
+	+ enableDnsHostnames. 
+	+ enableDnsSupport. 
 
 * Share VPCs (subnets) across accounts: 
 	+ Same region. 
@@ -422,15 +491,22 @@ _____________________________________ VPC _____________________________________
 * Elastic IPs (EIP): static IPv4 address. 
 	+ Associated to Instance or primary network card. 
 	+ Associate to EC2 instance: $ aws ec2 associate-address 
+	+ $: additionals per hour. 
+	+ Region specific. 
+	+ Allocate to account > associate. 
 
-* Direct Connect pricing factors: 
-	+ Capacity. 
-	+ Port hours. 
-	+ Data Transfer Out (DTO). 
+* Direct Connect: 
+	+ On-prem: Customer GW -> DX (Direct Connect Location) Customer router -Cross connect-> AWS router -> VPGW / AWS public services. 
+	+ Establish dedicated network connections from on-premises locations to AWS. 
+	+ Pricing factors: 
+		- Capacity. 
+		- Port hours. 
+		- Data Transfer Out (DTO). 
 
 * Private Link (PrivateLink): to securely connect my VPC to: supported services, services hosted on other accounts, supported Marketplace partners (without the need of IGW, NAT, VPN, Direct Connect). 
 	+ Interface (ENI) endpoint -> Service endpoint (Netw LB). 
-		- Interface Endpoint: ENI with a private IP address. Cost money. 
+		- Interface Endpoint: ENI with a private IP address. Costs money. 		// Primary use case: private connection to AWS services, partner services, and other VPCs without public IPs. 
+			' To connect my VPC to AWS services using AWS PrivateLink. 
 	+ Access SaaS privately. 
 	+ GWLB Endpoint: to distribute traffic to a fleet for netw virtual appliances. 
 
@@ -441,26 +517,43 @@ _____________________________________ VPC _____________________________________
 	+ Site-To-Site: VPC to on-prem. 
 		- VGW (Virtual Private GW): VPN endpoint (Amazon side) attached to a single VPC. 
 			' Assign an ASN (Autonomous System Number). 
+			' $: for each available VPN connection hour + data transfer out from EC2. 
+			' Max bandwith: 1.25 Gbps per tunnel, 140,000 packets, MTU: 1,466 b. 
 		- Customer GW (CGW): 
+			' Provides info to AWS about my device. 
 			' Configure my device: 
 				` IKE. 
 				` IPsec. 
 				` Tunnel Interface. 
 				` BGP. 
-		- Transit GW: for IPv6. 
+		- Transit GW: for IPv6. 				// Netw transit hub to interconnect VPCs+on-prem netws. 
+			' Allow for transitive routing. 
+			' I must specify one subnet from each AZ to be used by the Transit GW to route traffic. 
+			' Can peer to other TGWs cross-region, cross-account. 
 			' Virtual router at region level. 
 			' Attach up to 5,000 VPCs. An ENI provisioned for each. 
 			' Also for Direct Connect. 
 			' Also for third-party virtual appliances. 
+			' Each attachment can handle up to 50 Gbps of traffic. 
 	+ Client VPN (laptop): to securely connect to RDS instance that is on a private subnet. 
+		- Fully managed client-based VPN service to securely access AWS/on-prem resources. 
+	+ How to connect my on-prem resources to my VPC: 
+		- Deploy VPGW on AWS side. 
+		- Deploy Customer GW on the on-prem side. 
+		- Both get a public IP address. 
+		- IPsec tunnel connects them through the internet. 
+		- For routing, 2 options: 
+			` Static: manually define route in RT to VPGW. 
+			` Dynamic: config dynamic routing proto: BGP. 
+
 
 * NAT (Network Address Translation): mapping IP address space into another by modifying IP header of packets in transit accross traffic-routing device. 
-	- Instances: NAT in an EC2 for scaling. 
+	- Instances: NAT in an EC2 for scaling. 		// Legacy service to launch NAT on EC2 that requires ME to handle scaling. 
 
 * Bastion / Jumpbox: security hardened VM that provides secure access to private subnets. AWS alternative: Sessions Manager. 
 
 * VPC Lattice: to turn my AWS resources into services for a micro-service architecture. 
-	+ Service Network. 
+	+ Service Network: logical container for these services (communicating to each other) in the associated VPCs. 
 	+ Listener(s): up to 2. 
 	+ Target group: of specific type. 
 	+ Service Directory. 
@@ -473,8 +566,16 @@ _____________________________________ VPC _____________________________________
 * Route 53 Resolver DNS Firewall: protects agains DNS exfiltration. 
 
 * Network Firewall: stateful, managed, and IDS/IPS (Intrusion Detection/Protection) for VPC. 
+	+ Traffic that can filter: IGW, NAT GW, VPN. 
+	+ Endpoints: entry and exit points, in its own Firewall subnet. 
+	+ Rule groups. 
+	+ Rule sync. 
+	+ I have to set up the Route Tables. 
+	+ Alternative deployment: Transit GW. 
+	+ Rules Engines: Stateless | Stateful. 
 
 * Network Address Usage (NAU): metric. Default limit: 64,000. Quota increase: 256,000. 
+	+ Metric applied to resources in my virtual network to plan for and monitor the size of my VPC. 
 
 ########################################################
 
@@ -506,6 +607,13 @@ ____________________________________ IAM ____________________________________
 * Cross Account Role: sts:AssumeRole. 
 * Via web id provider: I send an OAuth 2.0 request to Facebook -> it responds with a Javascript Web Token -> aws CLI AssumeRoleWebIdentity -> STS -> I get temp creds. 
 * SSO: allows a user to login with a single ID/passw to different systems. 
+* Access key: Access Key ID + Secret Access Key. 
+* Statement container: allows for multiple occurrences and serves as a container for policy statements. 
+* ConsoleMe: OSS Netflix project. Provides self-service capabilities for managing permissions. 
+
+* Identity Center (SSO): manage users for multiple accounts. 
+	+ Permission Set: collections of IAM policies. 
+
 
 ########################################################
 
@@ -524,7 +632,7 @@ ____________________________________ EC2 ____________________________________
 * Cloud-init: industry standard multi-distribution method for cross-platform cloud instance initialization. 
 	+ Cloud instances are init from a disk image and instance data: 
 		- Meta data: MDS (Metadata Service) special endpoint: 169.254.169.254 | fd00:ec2::254 
-			` Catergories. 
+			` Categories. 
 			` Configuration: 
 				' Enforce use of tokens (use v2 of MDS). 
 			` $ curl http://169.254.169.254/latest/meta-data/ 
@@ -532,6 +640,7 @@ ____________________________________ EC2 ____________________________________
 		- Vendor data. 
 
 * Instance Types: Family Generation Processor-Family Additional-Capabilities . Size 
+	+ The 6 types: General Purpose, Optimized: Compute, Mem, Accel, Storage, HPC. 
 	+ Instance Family: combinations of CPU, Memory, Storage, Netw capacity. 		// M (General Purpose): even balance. T (Burstable perf): cheapest. Variable workloads. 
 		' General Purpose: 
 			` A1, T2, T3, T3a, T4g, M4, M5, M5a, M5n, M6zn, M6g, Mgi, Mac. 
@@ -581,7 +690,7 @@ ____________________________________ EC2 ____________________________________
 		- Shutting-down. 
 		- Terminated. 
 
-* Instance Console Screenshot: of the current state. 
+* Instance Console Screenshot: of the current state. 		$ aws ec2 get-console-screenshot 
 
 * Default user: ssmuser					$ sudo su - ec2-user 
 
@@ -604,13 +713,14 @@ ____________________________________ EC2 ____________________________________
 	+ Spread: each instance in a different rack. Max 7. 
 
 * EC2 Connect: 
-	+ SSH. 
+	+ SSH: public + private keys, open port 22 on SG. 
 	+ EC2 Instance Connect: short-lived SSH keys controlled by IAM. 
 	+ Sessions Manager. 
 	+ Fleet Manager Remote Desktop: Windows RDP. 
 	+ Serial console: underlying HW. 
 
 * Amazon Linux: based off CentOs. 
+	+ Advantages: maintained and hardened by AWS, direct support (or even only option) for services, better technical support. 
 
 * AMI (Amazon Machine Image): provides the info required to launch an instance. 
 	+ Region specific. 
@@ -638,6 +748,11 @@ ____________________________________ EC2 ____________________________________
 	+ Virtualization types: 
 		- HVM (Hardware VM): preferred. 
 		- PV (Paravirtualization). 
+	+ Image Builder: 
+		- Golden Image. 
+		- Choose Base Image > Add/remove SW > Customize settings > Test > Distribute > Run. 
+		- Pipeline: Build > Infra config > Distribution config. 
+		- Automate image creation, version mgmt. 
 
 * ASG (Auto Scaling Groups): contains a collection of EC2 instances treated as a group for automatic (horizontal) scaling and management. 
 	+ Automatic scaling: 
@@ -645,28 +760,30 @@ ____________________________________ EC2 ____________________________________
 		- Health Check Replacements: checks: EC2, ELB. 
 			' An ELB (Elastic Load Balancer) can be attached to the ASG indirectly via Target Groups. 
 		- Dynamic Scaling Policies: how much ASG should change capacity, triggered by Cloud Watch Alarms. 
-			' Simple: by a certain ammount. Not recommended. 
+			' Simple: by a certain ammount. Not recommended. 			// Key component: Scaling Adjustment. 
 			' Step: by a certain ammount at different thresholds (steps) when the alarm is repeatedly triggered. 
 			' Target Tracking: automatically scales the capacity based on a target metric value. 
 				` Metrics: AvgCPU, AvgNetwIn/Out, ALBRequestCountPerTarget, Custom. 
 				` Will create 2 CloudWatch alarms. 
 			' Predictive: triggers scaling by analyzing historical load data to detect daily or weekly patterns in traffic flows. 
 				` Requires 24h CloudWatch data. 
+				` Modes: Forecast Only | Forecast & Scale. 
+				` Steps: Analyze historical load -> Generate forecast -> Schedule scaling actions based on the forecast. 
 			' Adjustment types for Simple and Step: ChangeInCapacity, ExactCapacity, PercentChangeInCapacity. 
 	+ Works with ECS and EKS. 
 	+ Fargate DOES NOT USE ASG.  
 
 
 * Pricing: 
-	+ On-Demand: 	// Least Commitment. 
+	+ On-Demand: 	// Least Commitment. Short-term or irregular workloads. 
 		- Pay per hour. 
 		- Spiky. 
 	+ Spot: 		// Save up to 90% $. 
 		- Spare computing capacity from AWS. 
 		- Flexible start/end times. 
 		- Must handle interruptions. 
-		- Use case: non-critical bg jobs. 
-	+ Reserved:	// Long-Term. 
+		- Use case: non-critical bg jobs, batch processing. 
+	+ Reserved:	// Long-Term commitment with discount. 
 		- Steady usage. 
 		- 1 or 3 years. 
 		- Term x Class Offering x RI attrs x Payment Option. 
@@ -674,11 +791,27 @@ ____________________________________ EC2 ____________________________________
 			' Attrs: Instace type, Region, Tenancy, Platform. 
 			' Scope: Regional | Zonal (AZ). 
 			' Limits: per month: 20 regional, 20 per AZ. 
+		- Factors: type, region, tenancy, platform. 
 	+ Dedicated: on-demand, reserved, spot. 	// Most expensive. 
-	+ Saving Plans: simplifies the purchasing process. 
+		- Host: Same physical host. 		// Re-use licenses. 
+		- Instance: physical host can change but exclusive for me. 
+	+ Saving Plans: simplifies the purchasing process. 	// Predictable workloads. 
 		- Compute. 
 		- Instance. 
-		- SageMaker. 
+		- SageMaker.			// Notebook: Fully managed instance to create, edit, share Jupyter notebooks for data exploration, analysis, ML model building. 
+
+* Capacity Reservation: request a reserve of EC2 instance type for a specific Region and AZ. 
+* Source/destination check: restricts an instance to only send and receive traffic where it is the source or the destination, enhancing security. 
+* Logs can be delivered to CloudWatch Logs by installing the CloudWatch Unified agent on the EC2 instance. 
+
+* Elastic Network Interface (ENI): 
+	+ Multiple IPs. 
+	+ Primary ENI: eth0, private IP. Cannot be detached. 			// Auto created by default. 
+	+ Secondary ENIs. 
+	+ EIPs. 
+	+ Assign SGs. 
+	+ Hot attach/detach. 
+	+ Netw Flow Logs. 
 
 ########################################################
 
@@ -688,26 +821,33 @@ ____________________________________ EC2 ____________________________________
 	+ ELB: suite of LBs for EC2, ECS, Fargate, EKS instances. 
 	+ ALB (Application): OSI layer 7 (HTTP(S)). Can only be accessed via hostname. Use cases: microservices, containerized apps, e-commerce, retail websites, corporate websites, web apps, SaaS apps. 
 		- Request Routing: add rules to a listener (HTTP). 
-	+ NLB (Network): OSI layer 3/4 TCP/UDT. Can handle millions of requests per second. Use cases: high-perf computing, Big Data apps, real-time & multiplayer gaming platforms, IoT, telecommunicayion networks. 
+	+ NLB (Network): OSI layer 3/4 TCP/UDT. Can handle millions of requests per second. Use cases: high-perf computing, Big Data apps, real-time & multiplayer gaming platforms, IoT, telecommunication networks. 
 	+ GWLB (Gatway): to virtual appliances. 
 	+ CLB (Classic): OSI layer 7, 3/4. No recommended. 
 	+ Rules: Listeners > Rules (ALB only) > Target Groups. 
 	+ To associate ALB|NLB with EC2 instances: Target Groups. 
-	
+	+ To enable load balancing between 2 webservers: 
+		- Place EC2 instances in private subnet(s). 
+		- Create a Target Group and associate the instances. 
+		- Create an ALB that forwards HTTP/80 traffic to that TG. 
 
-* Route 53: 
+
+
+* Route 53: 							// Implement complex traffic flows (Blue/Green, failover). 
 	+ DNS (Domain Name Service). 
 	+ Register and manage domains. 
 	+ Hosted Zones: container for record sets, scoped to route traffic for a domain or subdomains. 
 		- Public: inbound traffic from the Internet. 
 		- Private: within a VPC. 
-	+ Record sets: always changed in batch via API. 
+	+ Record sets: always changed in batch via API. 			// UPSERT. 
 		- Alias Target can point to: CloudFront, Elastic Beanstalk, ELB, S3 website endpoint, resource record set (www.example.com), VPC endpoint, APIGW endpoint custom regional API. 
+		- TTL: how long DNS info should be cached. 
 	+ Traffic Flow: visual editor. 
+		- Versioning: roll out/back updates. 
 	+ Routing policies: 
-		- Simple: 1 record -> multiple IPs (random order). 
+		- Simple (default): 1 record -> multiple IPs (random order). 
 		- Weighted: split traffic. 
-		- Latency-based: lowest netw latency based on region. 
+		- Latency-based: lowest netw latency based on region. 		// Requires: Latency Resource Record on EC2/ELB in each region. 
 		- Failover: active/passive setups (PRIMARY/SECONDARY). 
 		- Geolocation: customer. 
 		- Geo-proximity: resources. Must use Traffic Flow tool. 
@@ -715,14 +855,26 @@ ____________________________________ EC2 ____________________________________
 	+ Health checks: every 30 seconds (can be reduced to 10s). 
 	+ Resolver: DNS server that allows me to resolve DNS queries between on-prem and VPC. 
 	+ DNSSEC (Domain Name Service Security Extensions): suite of specifications by the IETF for securing data exchange in DNS in IP networks. 
-		- Recommended to prevent other to impersonate my domain. 
+		- Recommended to prevent others to impersonate my domain. 
 		- Signing. 
+		- It ensures DNS responses are authentic and have not been tampered with, providing an additional layer of security. 
 	+ Zonal Shift: capability in Route 53 App Recovery Controller (ARC) to shift a LB away from a failed AZ to a healthy one in a single action. 
 	+ Profiles: across VPCs and accounts. 
+		- Resources: 
+			' Private hosted zones. 
+			' Route 53 Resolver rules. 
+			' DNS Firewall rule groups. 
 	+ To use geoproximity routing policy: Traffic Flow.  
+	+ Application Recovery Controller (ARC): service that continously monitors my app's ability to recover from failures. 
+		- Cell: groups all resources required for an app to operate independently. 
+		- Recovery Group: collection of cells that represents an app that I want to check for failover readiness. 
+		- Resource Set: AWS resources that can span multiple cells. 
+		- Readiness Checks: monitor readiness of standby deployment. 
+		- Routing Control: allows me to manually failover entire app stack to standby site. 
 
 
-* Global Accelerator: to find the optimal path from the end user to my web-server. 
+* Global Accelerator: to find the optimal path from the end user to my web-server through AWS backbone. 
+	+ Routing users to edge locations to get to the AWS netw as soon as possible. 
 	+ Deployed within Edge Locations. 
 	+ Types: 
 		' Standard. 
@@ -739,12 +891,12 @@ ____________________________________ EC2 ____________________________________
 	+ Components: 
 		' Origin. 
 		' Regional caches. 
-		' Distribution: Web, RTMP (streaming). 
+		' Distribution: Web, RTMP (streaming). 			// TTL default: 24h. I can manually invalidate the cache at the distribution level (/*, /dir/*, /specific-object). 
 		' Edge Locations. 
 	+ Lambda@Edge: 
 		' Viewer request/response. 
 		' Origin request/response. 
-	+ Functions: lightweight edge functions. Cheaper, faster, but more limited. 
+	+ Functions: lightweight edge functions. Cheaper, faster, but more limited. 	// JavaScript 5.1. 
 		' Viewer request. 
 		' Viewer response. 
 	+ Origin: the source where CloudFront will send requests. 
@@ -760,13 +912,13 @@ ____________________________________ EC2 ____________________________________
 	+ Automatically replicated within their AZ. 
 	+ Types: 
 		' General Purpose SSD (gp2). 
-		' gp3: 20% lower cost. Max: 16K IOPS. 
-		' Provisioned IOPS SSD (io1): fast. Perf: >16k IOPS. Size: 4GiB - 16 TiB. Max: 64k IOPS. 
+		' gp3: 20% lower cost. Max: 16K IOPS. 								// Most workloads. 
+		' Provisioned IOPS SSD (io1): fast. Perf: >16k IOPS. Size: 4GiB - 16 TiB. Max: 64k IOPS. 			// Critical, IOPS intensive, Throughput-intensive. 
 		' io2 Block Expresss: higher throughput, IOPS and storage. Perf: > 64k | 1k MiB/s. Size: 4GiB - 64 TiB. Max: 256k IOPS. 
 		' Cold HDD (sc1): infrequent access. 
-		' Throughput Optimized HDD (st1): magnetic drive quick throughput. 
+		' Throughput Optimized HDD (st1): magnetic drive quick throughput. Use cases: Log Processing, Big Data WH. 
 		' Magnetic (standard): previous generation HDD. 
-	+ HDD RAID (Redundant Array of Independent Disks): virtual data storage to improve fault tolerance. 
+	+ HDD RAID (Redundant Array of Independent Disks): virtual data storage to improve fault tolerance. 		// Actuator arm: moves R/W head to correct position on platters. 
 		' RAID 0 (Striping): no redundancy. 
 		' RAID 1 (Mirroring): data is duplicated. 
 		' RAID 5 (Parity): at least 3 disks. 
@@ -774,27 +926,47 @@ ____________________________________ EC2 ____________________________________
 		' RAID 10: 1+0. 
 	+ SSD (Solid State Drive): integrated circuit assemblies using flash memory. 
 		' Types: SATA, NVMe, M.2, U.2, Portable, PCIe. 
+		' M.2: commonly used in laptops/compact PCs. Interfaces: SATA, NVMe. 
+	+ How can I make an EBS volume available to an instance that's in ANOTHER AZ: 
+		' Take a snapshot of the EBS volume (S3). 
+		' Deploy a new EBS volume in the other AZ. 
+		' Attach this new volume to the instance in the other AZ. 
+	+ How about to another region: 
+		' Create a snapshot of the EBS volume (S3). 
+		' Copy the snapshot to the other region (S3). 
+	+ When would I need to use io2 express: 
+		' Latency: sub-millisecond. IOPS: 64,000. Throughput: 1,000 MiB/s. Volume size: 64TiB. 
+	+ What is the best option for Big Data, Data Warehousing, Log processing: 
+		' Throughput Optimized HDD (st1). 
 
+* Instance Storage: instance store provides temporary block storage physically attached to host computer for scratch data. 
 
 
 * EFS (Elastic File System): file storage service for EC2 instances. 
 	+ Storage capacity grows up to PB and shrinks automatically based on data stored. 
 	+ Multiple EC2 instances in the same VPC can mount a single EFS volume. 
-	+ Uses Netw File System version 4 protocol. 
-	+ Created multiple mount targets in all subnets. 
+	+ Uses Netw File System version 4 protocol (NFSv4). 			// Linux only. 
+	+ Create multiple mount targets in all subnets. 
+	+ To identify netw fs: netdev. 
+	+ EFS fs is made availble inside a VPC via mount target. 
+	+ Mount target gets IP from its subnet. 
+	+ Storage classes: Standard, One-Zone. 
+	+ Modes: general purpose perf, elastic throughput. 
 
 
-* FSx: to deploy scale feature-rich, high-performance FSs in the cloud. 
+* FSx: to deploy scale feature-rich, high-performance FSs in the cloud. 			// Supports various fs protocols. 
 	+ NetApp ONTAP. 
 	+ OpenZFS. 
-	+ WFS (Windows File Server). On-prem access: VPN, Direct Connect. 
+	+ WFS (Windows File Server). On-prem access: VPN, Direct Connect. 		// Fully managed shared storage solution built on Windows Server with native Windows compatibility, enterprise performance, and consistent sub-millisecond latencies. 
 	+ Lustre. 
-	+ File Cache: temporary high-perf storage location. 
+	+ File Cache: temporary high-perf storage location. 			// Makes dispersed datasets available to file-based applications on AWS with a unified view and at high speeds—sub-millisecond latencies and high throughput. 
 
 
 * Backup: centrally manage backups accross AWS services. 
 	+ Plan (or on-demand). 
 	+ Vault. 
+		' Lock: Governance mode: exceptions. Compliance mode: data can't be altered during retention period. 
+	+ Recovery Point. 
 	+ Incremental. 
 	+ Immutable. 
 
@@ -802,7 +974,7 @@ ____________________________________ EC2 ____________________________________
 
 * Snow Family: storage (and compute) devices used to physically move data in/out of the cloud. 
 	+ Delivered to S3. 
-	+ Snowcone: portable, rugged. 
+	+ Snowcone: portable, rugged. 			// For edge computing, data transfer. 
 		' Physically shipping | DatSync. 
 		' 8TB (HDD). 
 		' 14 TB (SSD). 
@@ -815,29 +987,59 @@ ____________________________________ EC2 ____________________________________
 			` Storage-optimized EC2-compatible compute: 80TB, 40 vCPUs, 80 GB RAM. 
 			` Compute optimized: 28 TB NVMe SSD, 104 vCPUs, 416GB RAM. 
 			` Compute optimized with GPU: equivalent to P3. 
+		' Data transfer protos: NFSv3, NFSv4, NFSv4.1, Amazon S3 over HTTP or HTTPS. 
 	+ Snowmobile: 100 PB. 
 
 
 
-* Transfer: managed transfer of files over FTP, SFTP, FTPS, AS2. 
+* Transfer: managed transfer of files over FTP, SFTP, FTPS, AS2. 		// Fully managed HA FTP server to host files. 
+	+ To: S3, EFS. 
 
 * Migration Hub: single place to discover my existing servers, plan migrations, track status.
 	+ Monitor status of: 
-		- AMS (Application Migration Service). 
+		- AMS/MGN (Application Migration Service): actual migration from on-prem to AWS. 90d free. Create migration plans. Replication & continous data sync. Automated Cutover & testing. 	// Also from another Cloud provider, between regions, AZ, account. 
 		- DMS (Database Migration Service): quickly & securely migrate a DB to another. Example: on-prem to AWS. 
+			' DMS Fleet Advisor: Data Collector -> S3 -> DMS. 
 			' AWS Schema Conversion: automatically converts src DB schema to target DB schema. 
 			' AWS Schema TOOL: desktop app. 
 			' Each migration path requires research as NOT all combinations of src/target are possible. 
 			' Migration methods: homogenous, instance replication, serverless. 
+			' Replication Instance. 
+			' DMS Endpoint: source, type, server name, port, creds. 
+			' Replication Task: Full Load, Full Load + CDC, CDC Only. 
+			' Homogenous | Heterogenous. 
 	+ Discovery Agent. 
 	+ Migration Evaluator Collector: submit request to AWS to assess a migration. 
 	+ Refactor: bridges networking accross AWS accounts so legacy and new services can communicate. 
 	+ Journey: guided templates for end-to-end migrations. 
+* App Discovery Service: gathers info about apps & infra to plan migration. 
+	+ Dependency mapping. 
+	+ Methods: 
+		- Agents: collect data on netw traffic, processes, perf, config of servers. 
+		- Agentless: VMware with Agent runnin on it. Collect info on CPU, RAM, DB metadata. 
+	+ Data collected pushed every 15m via TLS secure tunnel to S3. 
 
-* Data Sync: data transfer service for data migration to/from/between Cloud Storage services. 
+* Mainframe Modernization: move mainframe app from on-prem to AWS. 
+	+ Refactoring: legacy -> modern. Code & data. Blu Age: inventory analysis, dependency analysis, automated code transformation, scenario capture and mgmt. 
+	+ Replatforming. 
+	+ Asses. 
+	+ Developer IDE. 
+	+ CI/CD. 
+
+
+
+
+* Data Sync (DataSync): data transfer service for data migration to/from/between Cloud Storage services. 
+	+ Components: 
+		- Agent. 
+		- Location. 
+		- Task: available, running, unavailable, queued. 
+		- Task Execution. 
 	+ Protocols: NFS, SMB, HDFS, Object Storage. 
 	+ AWS: S3, EFS, FSx, Snowcone, S3-Compatible Snowball Edge. 
 	+ External: Google Cloud Storage, Azure Blob Storage & Files, OCI Object Storage, IBM Cloud Object Storage. 
+
+
 
 
 * Auto Scaling: service that discovers scaling resources in my account to add scaling plans. 
@@ -847,10 +1049,16 @@ ____________________________________ EC2 ____________________________________
 * Amplify: JS framework and managed infra to develop web/mobile apps. 
 	+ Components: CLI, SDK, UI, Hosting, Studio. 
 
-* App Flow: managed integration service for data transfer between data sources. 
-	+ Flow triggers: RUN on: demand, event, schedule. 
 
-* App Sync: fully managed GraphQL service. 
+* App Flow (AppFlow): managed integration service for data transfer between data sources. 	// Fully managed integration service to securely exchange data between SaaS apps & AWS services. 
+	+ Flow triggers: RUN on: demand, event, schedule. 
+	+ Use cases: 
+		- Transfer Salesforce oportunities -> RedShift records. 
+		- Analyze Slack conversations on schedule. 
+		- Manually trigger flow for tickets with a common case # in Zendesk -> S3. 
+
+
+* App Sync (AppSync): fully managed GraphQL service. 
 	+ Data Model, Data Sources, Resolvers. 
 	+ API types: GraphQL, Merged. 
 	+ Data sources: DynamoDB Table, OpenSearch, etc. 
@@ -864,11 +1072,17 @@ ____________________________________ EC2 ____________________________________
 * OpenSearch Service: full-text search service to deploy, operate, scale OpenSearch. 
 	+ Engines: 
 		- OpenSearch: AWS's fork. 
+			' OpenSearch Ingestion. 
+			' Service Domains. 
+			' Up tp 3 PB. 
+			' Use cases: monitor apps, SIEM, Personalized Search. 
+			' Serverless. 
+			' Domain = Cluster. 
 		- ElasticSearch: based on Lucene library. ELK stack: ElasticSearch, Logstash, Kibana. 
 
 * Device Farm: to test my app in different environments like Mobile Device and Desktop Browser. 
 
-* Amazon Quantum Ledger Database (QLDB): fully managed ledger DB for transparent, immutable, cryptographically variable transaction logs. 
+* Amazon Quantum Ledger Database (QLDB): fully managed ledger DB for transparent, immutable, cryptographically variable txn logs. 
 	+ Immutable logs. 
 	+ Crytographic verification. 
 	+ Serverless. 
@@ -880,6 +1094,7 @@ ____________________________________ EC2 ____________________________________
 
 * Elastic Transcoder: LEGACY fully managed video transcoding service for Video on Demand (VOD) or streaming. 
 * Media Convert: fully managed video transcoding service to convert videos from one format to another for VOD or streaming AND applying additional processing options. 
+	+ Transcode only specific parts of a video: clips. 
 
 
 
@@ -891,28 +1106,28 @@ ____________________________________ EC2 ____________________________________
 
 
 
-____________________________________ SNS ____________________________________ 
+____________________________________ SNS ____________________________________ 	// Handles real-time communication between my app's components. 
 
 * Simple Notification Service: fully managed, HA, durable, secure publishers/subscriptions service to decouple microservices, distributed systems, and serverless apps. 
 	+ SNS Topic: logical access point for communication. 
 	+ Pub/Sub: pattern where sender of messages to an event bus that categorizes them into groups. The receivers of messages subscribe to these groups. Messages/events are automatically and immediately pushed to subs. 
 
-* Sources: AWS services: topics standard. 
+* Sources (Publishers): AWS services: topics standard. 			// Publishers send messages to topics. 
 
-* Destinations: 
-	+ A2A (Application-to-App): Data firehose, Lambas, SQS, HTTP(S) endpoint, AWS Even Fork Pipeline. 
+* Destinations (Subscribers): 
+	+ A2A (Application-to-App): Data firehose, Lambas, SQS, HTTP(S) endpoint, AWS Event Fork Pipeline. 
 	+ A2P (App-to-Person): mobile apps, SMS (text messaging), email address, AWS Chatbot, PagerDuty. 
 
-* Topics: 
+* Topics: 								// Example: newUser, when a new user registers in my app. 
 	+ To group multiple subs together. 
 	+ To deliver to multiple protocols at once. 
 	+ Automatically format message according sub's protocol. 
 	+ Can be encrypted via KMS. 
 	+ Types: 
-		' Standard. 
-		' FIFO: guarantees message order. 
+		' Standard. 					// May not show up in order and more than once. 
+		' FIFO: guarantees message order. 			// Examples: bank txn, stock monitoring, flight tracking, price update apps. Strict ordering. 300 messages | 10MB /s. 
 
-* Messages: 
+* Messages: 							// Units of communication. 
 	+ Large messages: larger than 256KB, max 2GB. Must use Extended Client Lib. Saves the payload to S3 bucket. 
 	+ Attributes: to provide structured metadata. 
 	+ Batch Publishing: up to 10 at a time. 
@@ -922,13 +1137,17 @@ ____________________________________ SNS ____________________________________
 	+ Protos: HTTP(S), emaill (plain text), email-JSON, SQS, Lambda (triggers a function), SMS, Platform App endpoint. 
 
 * Filter Policy: to filter a subset of messages only to be delivered. 
+	+ Filter by message body: MessageBody. 
 
 * Message Data Protection: safeguards data published to SNS topics by using policies to audit, mask, redact, block sensitive info. 
+	+ Predefined %%% 
 
 * Delivery Policy: how retries work when server-side errors. 
 	+ Custom only for HTTP(S). 
 
 * App as Subscriber: send push notification messages directly to apps on mobile devices. 
+
+* BatchPublish action: publish up to 10 messages at a time, which helps reduce the SNS costs by a factor of 10. 
 
 ########################################################
 
@@ -940,20 +1159,31 @@ ____________________________________ SNS ____________________________________
 
 
 
-____________________________________ SQS ____________________________________ 
+____________________________________ SQS ____________________________________ 				// Problem: Microservice e-Commerce App: sequential processing, degraded perf, high cost. 
 
 * Messaging system: to provide async communication via messages/events from sender to a receiver. 
-* Queueing system: messaging system that generally deletes messages once they're consumed. 
+* Queueing system: messaging system that generally deletes messages once they're consumed. 		// Solution: decouple each service by adding a queue between each. Benefits: Load Leveling, Async processing, Acalable archi. 
 	+ Simple communication. 
 	+ Not real-time. 
 	+ Have to pull. 
 	+ Not reactive. 
 
-* Simple Queueing Service: fully managed queueing service. Use case: transactin emails to signup, reset password. 
+* Components: 
+	+ Queue: buffer that stores messages. 
+	+ Messages: units of comunication up to 256KB.  Attrs name:val. 	Visiblity timeout. 	Locking. 	Priority. 
+	+ Producers: send messages. 
+	+ Consumers: retrieve and process messages. 
+	+ DLQ (Dead Letter Q): instead of keeping retrying a failed message. 
+
+* Simple Queueing Service: fully managed queueing service. Use case: transaction emails to signup, reset password. 
+	+ Publish message: SDK.  
 
 * Types: 
-	+ Standard: nearly unlimited number of transactions per second (tps). 
-	+ FIFO: guarantees order of messages when being consumed. No duplicates. Consumer must specify a Message Group ID. 
+	+ Standard: nearly unlimited number of transactions per second (tps). 		// Best-effort ordering. At-least-once delivery. 
+	+ FIFO: 								// Strict ordering, delivered only once. Support: 300 messages/s, High troughput mode: 9,000 messages. 
+		- Guarantees order of messages when being consumed. 
+		- No duplicates. 
+		- Consumer must specify: Message Group ID + Deduplication ID. 
 
 * Size: 1 bye - 256 KiB. 
 
@@ -969,10 +1199,12 @@ ____________________________________ SQS ____________________________________
 
 * Temporary Queues: high-throughput, cost-effective, app-managed, temporary queues for request-response patterns. 
 
+* Access Policy: grant other principals permission to the SQS Queue. 
+
 ########################################################
 
 
-* Amazon MQ: managed message broker service for: 
+* Amazon MQ: managed message broker service for: 				// Managed service. App already using ActiveMQ or RabbitMQ migrating to the cloud but not having to re-write for SQS. 
 	+ ActiveMQ. 
 	+ RabbitMQ: supports advanced messaging protocols. 
 	+ Like SQS for more complex delivery rules and performance guarantees.  
@@ -982,17 +1214,20 @@ ____________________________________ SQS ____________________________________
 
 
 * Service Catalog: enables organizations to create and manage catalogs of products that are approved for use. 
-	+ Alternative to granting direct access to AWS resources via Console. 
+	+ Alternative to granting direct access to AWS resources via Console to: 
+		- Ensure consistent governance. 
+		- Meet compliance requirements. 
+		- Provide fine-grain access control. 
 	+ Admin user: manages the catalog (me). 
-		- Create portfolio: 
+		- Create portfolio: 					// Container for products, permissions, and constraints. A collection of products. 
 			' Product: CloudFormation template. 
 			' Permissions. 
 			' Constraints: rules: Launch, Notification, Template, StackSet, TagUpdate. 
 		- Service actions: SSM documents to perform tasks on the product. 
 			' To let the end user perform maintenance. 
 	+ End user: uses Catalog: user-friendly console to view and launch products. 
-		- Provisioned products (CloudFormation stacks) are launched. 
-			' Launch product "Micraft Server" -> name it and choose version -> fill in params. 
+		- Provisioned products (CloudFormation stacks) are launched. 			// Product: CloudFormation template that defines the resources to be launched. 
+			' Launch product "Minecraft Server" -> name it and choose version -> fill in params. 
 
 
 
@@ -1009,10 +1244,10 @@ ____________________________________ CloudWatch ________________________________
 	+ Basic | Detailed. 
 
 * Contributor Insights: Diagnostic tool. 
-* Dashboards: graphs based on metrics. 		* Alarms: trigger action when a metric passes a threshold. 		* ServiceLens: tracing for serverless apps. 
+* Dashboards: graphs based on metrics. 		 * Alarms: trigger action when a metric passes a threshold. 		 * ServiceLens: tracing for serverless apps. 
 ^^^^^^^^^^^				^^^							^^^
-* Metrics: turn logs into monitoreable variables. 													* Events. 		* Container Insights: metrics for microservices. 
-^^^^^^^^^^^									...->							^^^^ 		^^^^
+* Metrics: turn logs into monitoreable variables. 													* Events (trigger based on conditions). 			* Container Insights: metrics for microservices. 
+^^^^^^^^^^^									...->							^^^^ 						^^^^
 * Logs: monitor, store, access. 
 	+ I can export to S3. 
 	+ Stream to Elasticsearch. 
@@ -1054,7 +1289,7 @@ ____________________________________ CloudWatch ________________________________
 	+ Config the Agent: /etc/awslogs/awslogs.conf 
 	+ Restart Agent service. 
 
-* EventBridge: 
+* EventBridge: 						// Distributed App: components operate independently. They communicate with each other via events. Allows us to build event-driven loosely-coupled architectures. Event processing at scale. Event routing & filtering. Components: Event Bus (sources, rules, targets), Pipes ("filter, enrich, transform"), Scheduler. 	
 	+ Serverless event bus service for app integration by streaming real-time data to my apps. 
 	+ Event Bus: receives events from source and routes them to target based on rules. 
 	+ Components: 
@@ -1063,7 +1298,7 @@ ____________________________________ CloudWatch ________________________________
 		- Events: JSON. 
 			' version. 
 			' id. 
-			' detail-type. 
+			' detail-type. 			// Fields and values that appear in the detail field of the event. 
 			' source. 
 			' account. 
 			' time. 
@@ -1094,10 +1329,10 @@ ____________________________________ CloudWatch ________________________________
 
 * Alarms: monitors a Metric based on a defined threshold. 
 	+ States: OK, ALARM, INSUFFICIENT_DATA. 
-	+ I define what action to trigger when it changes state. 
+	+ I define what action to trigger when it changes state. 			// Sending a notification. 
 	+ Components: 
-		- *Type. 
-		- *Threshold *condition. 
+		- Type. 
+		- Threshold condition. 
 		- Metric. 
 		- Data point. 
 		- Period. 
@@ -1125,31 +1360,34 @@ ____________________________________ CloudWatch ________________________________
 
 
 
-____________________________________ Lambda _______________________________________
+____________________________________ Lambda _______________________________________ 
 
 * Serverless Function as Service to run code (without provisioning or managing servers). 
 * Pay only for the compute time consumed. 
 * Glue services together. 
-* Versioning supported. 
+* Versioning supported: to publish new versions for testing without affecting the production version. 
 	+ When referencing, unqualified ARN points to LATEST. 
 	+ Alias: friendlier name. 
 * Layers: up to 5. 
-* Instruction Set: 
+* Instruction Set: 									// Set of opcode that represents operations a CPU can perform. 
 	+ arm64. 
 	+ x86_64. 
-* Runtimes: preconfigured env to run specific programming languages. 
+* Runtimes: preconfigured env to run specific programming languages. 			// Ruby, Python, Java. 
 	+ OS-Only: for when there's no preinstalled so I'd need to compile myself. 
 		- Native AOT (ahead-of-time): Go, Rust, C++, .NET NAOT, Java GraalVM Native. 
 		- 3rd-Party: Bref for PHP, Swift. 
 		- Custom: build my own runtime. 
 * Deployment packages: contains my code. 
-	+ ZIP. Must upload to S3 of > 50MB. 
+	+ ZIP. Must upload to S3 if > 50MB. 
 	+ Image: Docker. Must push image to ECR. 
+
+* Max MEM: 10 GB. 
+* Max ephemeral storage: 10 GB. 
 
 ################################################################
 
 
-* Step Functions: coordinate multiple AWS services into serverless workflows. 
+* Step Functions: coordinate multiple AWS services into serverless workflows. 		// Complex workflow orchestration, error handling, visual editor. 
 	+ State Machine Types: 
 		- Standard. 
 		- Express: streaming data. 
@@ -1166,7 +1404,7 @@ ____________________________________ Lambda ____________________________________
 		- Data processing pipeline for streaming data. 
 		- Split and transcode video using massive parallelization. 
 	+ States: 
-		- Pass: no work. 
+		- Pass: no work. 						// Useful for constructing and debugging state machines. 
 		- Task: single unit of work. AWS Lambda, API actions, Activity (external worker continously polls). 
 		- Choice: branching logic. 
 		- Wait. 
@@ -1204,12 +1442,15 @@ ____________________________________ Lambda ____________________________________
 	+ Examples: stock prices, game data, social netw, geospatial, click stream. 
 	+ Stream types: 
 		- Data: custom producers & consumers. 
-			' Capacity modes: on demand, provisioned. 
-		- Firehose: serverless, simple. 
+			' Capacity modes: 
+				` On-demand: dynamically scale up/down. Pricier. 
+				` Provisioned: if I know what the throughput requirements are. 
+		- Firehose: serverless, simple. 					// ETL via Lambda -> storage location. Up to 60s. 
 			' Before data is sent to a destination it can be transformed with AWS Lambda. 
 			' Dynamic Partitioning: to continuously partition streaming data by using keys and then deliver the data grouped by these keys into S3 prefixes. 
-		- Fink: run queries and create reports. Custom SQL. 
-		- Video. 
+			' Destinations: S3, Redshift, OpenSearch, Splunk, 3rdPs. 
+		- Fink: run queries and create reports. Custom SQL. 		// Query data FLOWING through real-time stream to create reports on emerging data. 
+		- Video. 							// + Audio, Sensor data. 
 	+ Producers: 
 		- Agent: monitors files. 
 		- SDK: PutRecord. 
@@ -1219,8 +1460,8 @@ ____________________________________ Lambda ____________________________________
 		- 3rdP: Fink, Kafka Connect, Adobe Experience, Oracle GoldenGate. 
 		- Firehose. 
 		- SDK: GetRecords. 
-		- KCL (Client Lib): to write my own custom consumers. 
-	+ Shards: 
+		- KCL (Client Lib): to write my own custom consumers. 		// To simplify consuming data from Amazon Kinesis streams. 
+	+ Shards: 								// Are like VMs. Scalability: add shards. 
 		- A Kinesis Data Stream is a set of shards. 
 		- Read: up to 5 transactions per second, max rate of 2MB/s. 
 		- Writes: up to 1,000 records/s, max rate 1 MB/s. 
@@ -1230,7 +1471,8 @@ ____________________________________ Lambda ____________________________________
 		- Unicode, max len 256 chars. 
 		- An app that puts data into a stream must specify a partition key. 
 	+ Data Retention: 24h default, up to a year ($). 
-	+ Enhanced Fan Out (EFO): up to 20 consumers, throughput up to 2MB/s/shard. 
+	+ Enhanced Fan Out (EFO): up to 20 consumers, throughput up to 2MB/s/shard. 		// Consumers must be configured with KCL | Streams API. 
+	+ Data Durability/Availability: data records are replicated across multiple AZs. 
 
 
 
@@ -1254,7 +1496,7 @@ ____________________________________ Lambda ____________________________________
 		- Standard. Can be deployed on-prem via Outposts. 
 		- Serverless. 
 
-* MemoryDB: Redis-compatible in-mem DB, suitable as primary DB. 
+* MemoryDB: Redis-compatible in-mem DB, suitable as primary DB. 			// Provides additional persistence guarantees. 
 
 
 
@@ -1268,6 +1510,7 @@ ____________________________________ CloudTrail ________________________________
 
 * Logs API calls between services. 					// Who to blame. 
 * Event History: 90 days default. 
+* Trail: collect logs beyond 90 days. 
 * Can deliver events to CloudWatch: enables SNS notifications on specific activities. 
 	+ Management events. 
 	+ Data events: S3, Lambda. 
@@ -1278,12 +1521,28 @@ ____________________________________ CloudTrail ________________________________
 
 
 
-* RedShift: managed, petabyte-scale Data Warehouse. 
+* RedShift: managed, petabyte-scale Data Warehouse. 		// Data Warehouse: consolidate data: data integration. Provide unified view of data for informed business decitions. Optimized for analytics. Historical data. Data transformation: ETL. Structured Data at aggregate level. 
 	+ For BI. 
 	+ Uses OLAP (Online Analytics Processing System). 
 	+ Columnar storage. 
+	+ Leader Node + Compute nodes. 
+	+ Redshift Managed Storage. 
+	+ MPP: Massively Parallel Processing. 
+	+ Data compression. 
+	+ Automated and continous backups. 
+	+ HA. 
+	+ Concurrent users. 
+	+ Use cases: financial and demand forecasts, BI. 
 
-* Athena: interactive query service to analyze data directly from S3. 
+* RedShift Serverless: 
+	+ RPUs: RedShift Processing Units. I Pay for workloads run in RPU-hours on a per-second basis. 
+	+ Base Capacity. 1 RPU = 16 GB RAM. Adjust: 8 - 512 RPU. 8-12 RPU: 128 TB data. Min: 32 RPU. 
+
+
+
+
+
+* Athena: interactive query service to analyze data directly from S3. 				// Dashboard + Search Query Engine. 
 	+ Athena SQL: Tinro SQL. 
 		- Workgroup: saved queries. 
 		- Data src: catalogs. 
@@ -1301,7 +1560,8 @@ ____________________________________ CloudTrail ________________________________
 
 
 
-
+* QuickSight: visualization dashboard. Show data nicely. 
+	+ SPICE (Super-fast Parallel, In-Memory Calculation) Engine. 
 
 
 
@@ -1344,7 +1604,11 @@ ____________________________________ Machine Learning __________________________
 	+ Free, upfront commitment, usage based. 
 
 
-* Glue: serverless data integration service for analytics users to discover, prepare, move, integrate data from multiple sources. 
+
+// ETL data from different sources, deliver into a data repo. 
+// Glue job: Datasource -> Crawler -> Data Catalog. 
+// Serverless. 
+* Glue (ETL): serverless data integration service for analytics users to discover, prepare, move, integrate data from multiple sources. 
 	+ Studio: visually build ETL (Extract Transform Load) pipelines. Nodes. Sources, Transforms, Targets. Version control. Python script. 
 	+ Jobs: charged DPU (Data Processing Units). 
 		- Python Shell Engine. 
@@ -1355,28 +1619,36 @@ ____________________________________ Machine Learning __________________________
 		- Table: metadata definition. 
 		- Crawler: tool to discover schema formats and generate Glue Data Tables. 
 
-* Lake Formation: data lake to govern, secure, globally share data. 
-	+ Commonly stored as: object (blobs), files. 
+* Glue Databrew: visual interface. Completely visual data prep tool to clean & normalize data. 
+	+ No code. Only GUI. Serverless. 
+	+ Create Project > Select Datasets > Select Recipes > Run Jobs. 
+	+ Auto Data Profiling. 
+	+ Auto Scales. 
+
+
+* Lake Formation: data lake to govern, secure, globally share data. 		// Aggregation of meaningful data sets in a company. 
+	+ Commonly stored as: object (blobs), files. 			// <- storage medium. 
 	+ Data Lake: centralized data repo for unstructured, semi-structured data. Storage: generally object (blobs) | files. 
 	+ Collect -> Transform -> Publish. 
 	+ Granular access: Athena, Quicksight, Redshift Spectrum, EMR, and Glue. 
+	+ Ingestion > Storage (S3) can be stored in parquet | ORC (optimized for analytics) > Processing. 
 
 
-* Amazon API GW: solution for creating secure APIs at any scale. 
+* Amazon API GW: solution for creating secure APIs at any scale. 				// Config CORS: x-amazon-apigateway-cors 
 	+ API GW: sits between single-entry point and multiple backends. 
 	+ OpenAPI Specification (OAS): standard, lang-agnostic interface to RESTful APIs to discover capabilities of the service. 
 	+ Swagger: tools for implementing it. 
 	+ JSON | YAML. 
 	+ Types: 
-		- Rest: 
+		- Rest: 								// Methods: allow customizing requests/responses for endpoints. 
 			' Stages (PROD). 
 			' API: Resources: endpoints (/hello): Methods (GET, PUT). 
 			' Integration. 
-		- HTTP: low latency, lower cost, public API only. Endpoint: regional. Security: TLS. Authorization: AIM, Cognito, Custom with Lambda. API mgmt: API keys, per-client rate lim, usage throttling. Development: automaitc deployment, user-controlled deploys, CORS config, Request Param Transform. Monitoring: CloudWatch Metric & Logs. Integrations: Public HTTP endpoints, AWS Services, Lambda functions, Private NLB, ALB, Cloud Map. 
+		- HTTP: low latency, lower cost, public API only. Endpoint: regional. Security: TLS. Authorization: IAM, Cognito, Custom with Lambda. API mgmt: API keys, per-client rate lim, usage throttling. Development: automatic deployment, user-controlled deploys, CORS config, Request Param Transform. Monitoring: CloudWatch Metric & Logs. Integrations: Public HTTP endpoints, AWS Services, Lambda functions, Private NLB, ALB, Cloud Map. 
 			' Stages: $default (autodeployed). 
 			' API: Routes (PUT /hello): 
 			' Integration: EventBridge, SQS, AppConfig, Kinesis Data Streams, Step Functions. 
-		- WebSockets: persistent connection. 
+		- WebSockets: persistent connection. 					// Use cases: real-time: chat, dashboards. 
 	+ Extensions: 
 		- -policy. 
 		- -cors. 
@@ -1386,8 +1658,36 @@ ____________________________________ Machine Learning __________________________
 
 
 
+* DBA: 
+	+ Routine DB ops. 
+	+ HA + Fault Tolerance. 
+	+ Scalability. 
+	+ Backup and Restore. 
+	+ Monitoring + Performance. 
+	+ Security. 
 
-____________________________________ RDS _______________________________________
+____________________________________ RDS _______________________________________ 
+
+* Instance types: 
+	+ General Purpose. 
+	+ Memory Oprtimized. 
+
+* Storage: 
+	+ General Purpose SSD: medium size DB, dev/testing env, 3 IOPS/GB -> 3,000. 
+	+ Provisioned IOPS SSD: IO intensive, low latency, consistent throughput, prod env, min 100GB, man 16TB. 
+	+ Magnetic: legacy, HDD: slower, being phased-out. 
+
+* Config: 
+	+ Param groups. 
+	+ Option groups. 
+	+ Subnet groups. 
+	+ Security groups. 
+	+ Snapshots. 
+	+ Param store. 
+	+ Perf insights. 
+	+ Enhanced Monitoring. 
+	+ Audit + Log data. 
+	+ SSL + enc. 
 
 * Relational DB Service: managed for multiple DBs. 
 * Encryption: at-rest for all engines. In-transit by default via DB DNS endpoint. 
@@ -1399,14 +1699,14 @@ ____________________________________ RDS _______________________________________
 * Subnet Groups: collection of subnets (usually private). 
 	+ All subnets must be public for the instance to be publicly accessible. 
 	+ At least 2 AZs. 
-* Multi-AZ: one or 2 standby RDS clusters or instances for fail over. 
+* Multi-AZ: one or 2 standby RDS clusters or instances for fail over. 	// Async replication. 
 	+ Instance: RDS Instances. 
 	+ Cluster: Aurora Custers. 
-* Read Replicas: to run multiple read-only copies of DB. 
+* Read Replicas: to run multiple read-only copies of DB. 		// Read from multiple (active-active). 
 	+ To improve read contention. 
 	+ Auto backups must be enabled. 
 	+ Async replication. 
-	+ Multi-AZ (sync replication), cross-region, of other replicas. 
+	+ Multi-AZ (sync replication), cross-region, of other replicas. 	// Stand-by instance for fail over. 
 * DB Instance: isolated DB env. 
 	+ One or multiple user-created DBs. 
 	+ Has DB identifier. 
@@ -1415,7 +1715,7 @@ ____________________________________ RDS _______________________________________
 * Perf insights: default 1 week. 
 * Custom: automates DB admin, directly manage aspects of RDS. 
 	+ MS SQL S, Oracle. 
-* Proxy: creates a connection pooler so short-lived Lambda functions do not exhaust connections. 
+* Proxy: creates a connection pooler so short-lived Lambda functions do not exhaust connections. 		// Fully managed, HA. 
 * Optimized R/W: maximize perf, efficiency, throughput. 
 	+ NVMe-based SSD block storage instead of EBS for temporary tables: sorts, hash aggregations, high-load joins, CTEs (Common Table Expressions). 
 * IAM Authentication: authn with token to RDS instance's DB. 
@@ -1431,8 +1731,10 @@ ____________________________________ RDS _______________________________________
 * Establish Public Connection: DB IDE, CloudShell, DB client. Connection url string: contains all params. 
 * Private connection: Cloud9 in same VPC, through Bastion, EC2 instance SSH SSM, Client VPN, on-prem: Direct Connect. 
 * Security Groups: to establish connection open the port. 
-* Blue/Green Deployment: copies a prod DB env to a separate sync staging env. 
+* Blue/Green Deployment: copies a prod DB env to a separate sync staging env. 		// Production (blue) / Staging (testing, green): logical replication. Move clients over to green and swap colors. Same AWS account. 
 * Extended Support: $$$ run DB past end of standard support up to 3 years. 
+
+* For staging/dev envs: SINGLE RDS DB. If AZ goes down, data is lost. 
 
 
 * Aurora: fully managed RDB cluster. 
@@ -1449,7 +1751,7 @@ ____________________________________ RDS _______________________________________
 	+ V2: fully-manages autoscaling. 
 		- At least 0.5 ACUs. 
 		- ACU (Aurora Capacity Unit): max 128. 
-	+ Serverless VS Provisioned. 
+	+ Serverless (scales R/W ops independently) VS Provisioned. 
 	+ Global: spanning multiple regions for low-latency. 
 		- Primary Cluster: writer. 
 		- Up to 5 secondary clusters. 
@@ -1461,7 +1763,7 @@ ____________________________________ RDS _______________________________________
 #########################################################
 
 * DocumentDB: NoSQL doc DB MongoDB compatible. 
-	+ Document Store: NoSQL DB that stores documentsL XML | JSON. Sub-class of key:value stores. 
+	+ Document Store: NoSQL DB that stores documents: XML | JSON. Sub-class of key:value stores. 
 		- Collection -> Documents -> Fields. Indexes. Embedding & Linking. 
 	+ MongoDB: OSS which stores JSON-like docs. 
 		- Primary data structure: BSON (Binary JSON). 
@@ -1477,37 +1779,57 @@ ____________________________________ RDS _______________________________________
 * DynamoDB: NoSQL key/val and document DB for internet-scale apps. 
 	+ NoSQL: not relational, no SQL for query. 
 	+ Key/Value Store: key references a value. 
-	+ Fully Managed. 
-	+ Multi-region. 
+	+ Fully Managed & serverless. 
+	+ Multi-region with Global Tables. 
 	+ Multi-master. 
 	+ Stored in SSD, 3 AZs. 
 	+ Tables, Items, Attributes, Values. 
 	+ Read Consistency: when data is updated, it has to be written to all copies. Can be inconsistent when reading a copy not yet updated. 
-		- Eventual Consistent Reads: fast, no guarantee, generally consistent within a second. 
+		- Eventually Consistent Reads: fast, no guarantee, generally consistent within a second. 
 		- Strongly Consistent Reads: will not return a result until all copies are consistent (guarantee, higher latency), within a second. 
 	+ Partitions: 
 		- Allocation of storage for a table SSD auto replicated across AZs (same region). 		// Slicing a table in smaller chunks. 
 		- Auto. 
 		- Every 10GB | WCU/RCU exceeded. 
 		- Item: collection of data with uniq key in a table. 
-	+ Primary Keys: must be defines. Cannot change. 
+	+ Primary Keys: must be defined. Cannot change. 
 		- When using both Partition Key and Sort key: Composite Primary Key. 
 		- Simple: internal hash function decides which partition to write data to. 
-		- Composite: combination have to be unique. 
+		- Composite: combination has to be unique. 
 	+ Query: find times based on primary key. 
 	+ Scan: through all items and return one or more through filters. 	// Avoid when possible. 
 		- Param to speed up: segments. 
+	+ To transfer data records: first seed the table. 
+	+ Scales to 0. 
+	+ Secondary Indexes. 
+	+ On-Demand Backup and Restore. 
+	+ Table Classes: 
+		- Standard. 
+		- Standard-Infrequent Access. 
+		- On-Demand. 
+
+* DynamoDB Accelerator (DAX): caching service. 
+	+ Read 10x perf even @ million of requests per second. 
+	+ HA: Primary Node + Read Replicas. 
+	+ Extreme perf. 
+	+ Scale on demand up to 10 node cluster. 
+	+ Fully managed. 
 
 
-* KeySpaces: fully managed Apache Cassandra DB. 
+* KeySpaces: fully managed Apache Cassandra DB. 		// Scalable, HA, Serverless. 
 	+ NoSQL key:val columnar store. 
 	+ Cluster: nodes. 
 	+ Node: holds 2-4TB. R/W. 
 	+ Ring: nodes connected to each other. 
 	+ Keyspace: namespace specifies data replication. 
 	+ Table: cols + rows with pk. 
+	+ Throughput capacity modes: 
+		- On-Demand: pay as I go, dynamic capacity. 
+		- Provisioned: optimize price, planned capacity. Once per day capacity change. 
+	+ Multi-Region Replication: active-active. 
+	+ Use cases: low latency. 
 
-* Neptune: graph DB. HA. Gremlin, SPARQL, OpenCypher. 
+* Neptune: graph DB. HA. Gremlin, SPARQL, OpenCypher. 			// Complex relationships. Fully managed, serverless. Global. 
 	+ Graph DB: vertices + edges. 
 	+ ML: DGL (Deep Graph Lib). 
 	+ Types: Provisioned | Serverless. 
@@ -1579,7 +1901,7 @@ ____________________________________ ECS _______________________________________
 	+ Deleted. 
 	+ Activating/Deactivating. 
 	+ Pending/Stopping. 
-	+ Provisioning / Deprov. 
+	+ Provisioning/Deprov. 
 
 * Task Definition JSON: 
 	+ Family: task definition group. 	//Versioning. 
@@ -1587,7 +1909,7 @@ ____________________________________ ECS _______________________________________
 	+ Task Role. 
 	+ Netw Mode: Host, Bridge, AWSVPC, None. 
 	+ CPU + Mem. 
-	+ Requires Capacity. 
+	+ Required Capacity. 
 	+ Container Definition: 
 		- Name. 
 		- Image. 
@@ -1639,12 +1961,14 @@ ____________________________________ EKS _______________________________________
 	+ ADOT (AWS Distro 4 OpenTelemetry): secure, production-ready distro of OTel. 
 	+ Instrumentation: embedding a monitoring lib in my app. 
 * Prometheus: OSS systems monitoring and alerting toolkit. 
-	+ Timeseries DB. 
+	+ Timeseries DB (TSDB). 
 	+ AMP (Amazon Managed Service 4 Prometheus): fully managed monitoring for container infra and apps metrics. 
 		- To securely monitor container envs at scale. 
 		- Use AMSG (Amazon Managed Service 4 Graphana) to visualize data. 
-* Graphana: OSS analytics and interactive visualization. 
+		- PromQL. 
+* Graphana: OSS analytics and interactive visualization. 				// Beautiful dashboards. 
 	+ Types of data: operational metrics, logs, traces. 
+	+ Amazon Managed Grafana: fully managed, interactive data visualization, unified observability, SSO. 
 
 ##########################################################
 
@@ -1656,9 +1980,9 @@ ____________________________________ EKS _______________________________________
 
 * KMS (Key Management Service): create and manage (control, rotate) enc keys. 
 	+ Multi-tenant HSM (HW Security Module). 
-	+ Some services that integreates with: RDS, CodeCommit, S3, CodeDeploy, Glacier, SNS, SQS, DynamoDB, EC2, X-Ray, ElastiCache, CodeBuild. 
+	+ Some services that integrates with: RDS, CodeCommit, S3, CodeDeploy, Glacier, SNS, SQS, DynamoDB, EC2, X-Ray, ElastiCache, CodeBuild. 
 	+ CloudHSM: single-tenant (dedicated). 
-	+ Customer Master Key (CMK): stored in secure HW. Used to encrypt all other keys (Envelope Encryptoin). Master Key -encrypts-> Data Key -encrypts-> Data. Logical representation of a master key. Metadata: key ID, creation date, descr, key state. Supports symmetric and asymmetric. 
+	+ Customer Master Key (CMK): stored in secure HW. Used to encrypt all other keys (Envelope Encryption). Master Key -encrypts-> Data Key -encrypts-> Data. Logical representation of a master key. Metadata: key ID, creation date, descr, key state. Supports symmetric and asymmetric. 
 	+ CLI: $ kms: create-key, encrypt, decrypt, re-encrypt, enable-key-rotation. 
 
 
@@ -1672,6 +1996,14 @@ ____________________________________ EKS _______________________________________
 * ACM (Amazon Certificate Manager): provision, manage, deploy public/private SSL/TLS certs. 
 	+ Domain: example.com, *.example.com. 
 	+ ELB, CloudFront, APIGW. 
+	+ Terminating SSL: 
+		- @ LB. 
+		- End-To-End. 
+	+ Cannot be directly used with: 
+		- EC2. 
+		- S3. 
+		- Lambda. 
+	+ Region specific. 
 
 
 * Cognito: customer id and access management (CIAM) system. 
@@ -1685,11 +2017,13 @@ ____________________________________ EKS _______________________________________
 * Amazon Detective: analyze, investigate, identify root cause of security findings or suspicious activities. 
 	+ Metrics for EC2, principles: SUC & Fail rates, Bytes IN/OUT. 
 
+
 * Directory Service: maps the names of netw resources to their netw addresses. 
 	+ Shared infra info for locating, managing, administering, organizing resources: 
 		- Volumes, folders, files, printers, users, groups, devices, etc. 
 	+ Examples: DNS (dir service for The Internet), MS Active Dir. 
 	+ Active Dir: Windows 2000. Azure AD. Forrest -> Domain -> Tree -> Child Domain <- Organization Units. 
+		- To manage multiple on-prem infra components/systems using a single id per user. 
 	+ LDAP (Lightweight Directory Access Proto): open, vendor-neutral, indistry standard app proto for accessing and maintaining distributed dir info services over IP. 
 		- Provide central place to store username/passwords. 
 		- Enabled same-sign on. 
@@ -1710,7 +2044,7 @@ ____________________________________ EKS _______________________________________
 	+ Hardening: eliminating security risks. 
 	+ CIS Benchmark: 699 checks. 
 
-* Macie: issues with S3 buckets with Personal Identifiable Info. 
+* Macie: issues with S3 buckets with Personal Identifiable Info (PII). 
 
 
 * Security Hub: Cloud Security Posture Management (CSPM) to generate a security score to determine security posture. 
@@ -1723,6 +2057,7 @@ ____________________________________ EKS _______________________________________
 	+ RDS, Redshift, DocumentDB, Other DBs, Key/Value. 
 	+ Auto rotation: for DB creds. 
 	+ CLI: $ secretsmanager: describe-secret, get-secret-value. 
+	+ Max auto key rotation: 365d. 
 	+ $. 
 
 
@@ -1736,7 +2071,7 @@ ____________________________________ EKS _______________________________________
 	+ Build & run apps that use Kafka to process streaming data. 
 	+ Nodes: broker, ZooKeeper. 
 	+ Clusters: provisioned, serverless. 
-	+ To connect to cluster: bootstrap broekr endpoint. 
+	+ To connect to cluster: bootstrap broker endpoint. 
 	+ Connect: bring data in from other sources. 
 	+ Kafka: OSS streaming platform, high-perf data pipelines, streaming analytics, data integration, mission-critical apps. JAVA. 
 		- Producers, Consumers, Topics. 
@@ -1744,6 +2079,12 @@ ____________________________________ EKS _______________________________________
 	+ Zookeper: OSS server for highly reliable distributed coordination of cloud apps. 
 		- Common services expose: naming, config mgmt, sync, group. 
 	+ Services integrate: S3, EventBridge. 
+	+ Amazon manages: Broker & ZooKeeper nodes. 
+	+ I manage: 
+		- Serverless: nothing. I just specify capacity. 
+		- Managed: Producers, Consumers, Cluser Operation. 
+	+ Reliability & HA: automated backups, multi-zone replication. 
+	+ Monitoring & Alerts: CloudTrail, CloudWatch. 
 
 
 * Shield: managed DDoS protection service that safeguards apps. 
@@ -1751,8 +2092,9 @@ ____________________________________ EKS _______________________________________
 	+ OSI Layers: 3, 4, 7. 
 
 * WAF (Web App FW): protect web app from common web exploits. 
-	+ Write rukes, use ruleset from security partner, protect from attacks covered in OWASP Top 10. 
+	+ Write rules, use ruleset from security partner, protect from attacks covered in OWASP Top 10. 
 	+ DDoS: disrupt traffic by flooding a website with fake traffic. 
+	+ WebACL: rules. Conditions and actions. 
 
 * CloudHSM: single-tenant HW Security Module. 
 	+ HW designed to store enc keys in mem, never in disk. 
@@ -1766,20 +2108,33 @@ ____________________________________ EKS _______________________________________
 	+ $. 
 
 * Service Health Dashboard: shows general status of AWS services. 
-* Personal Health Dashboard: provides alerts and guidance for AWS events. 
+	+ Public Events: AWS announces an issue with a service. 
+	+ Private Event: an issue with an Account. 
+* Personal Health Dashboard: provides alerts and guidance for AWS events for my specific Account. 
 
 * Artifact: self-serve portal for on-demand access to AWS compliance reports. 
 	+ See if AWS ITSELF is compliant. 
 
 
-* Storage GW: connects on-prem SW apps with cloud-based storage. 
-	+ File GW: within on-prem env. SMB | NFS. 
+* Storage GW: connects on-prem SW apps with cloud-based storage. 			// Hybrid Cloud storage service. Acts as a bridge between on-prem & cloud-based storage. Alows to seamlessly integrate on-prem apps with cloud storage resources. 
+	+ Purposes: 
+		- Extension for on-prem storage needs. 
+		- Assists migrations into the Cloud. 
+		- Backups. 
+		- Disaster Recovery. 
+	+ Either VM | physical device. Exists on on-prem env. 
+	+ File GW: within on-prem env. SMB | NFS. 		// Data stored in S3. File key = /path/to/file.ext. 
 		- File GW to S3. 
 		- File GW to FSx: WFS (Windows File Server). 
 	+ Volume GW: mount S3 as local drive. Proto: iSCSI. 
-		- Cached: frequent. 
-		- Stored: primary data + backup. 
-		- Tape GW: VLT (Virtual Lib Tapes) long-term backup. 
+		- Cached: frequent. 				// Data is stored on S3. Local cache on-prem for frequent files. Extends storage. 
+		- Stored: primary data + backup. 		// Backup only. Volumes consume capacity on-prem. Data is stored locally and replicated async to AWS. Copies data over to S3 as EBS snapshots. So doesn't increase datacenter storage capacity. 
+	+ Tape GW: VLT (Virtual Lib Tapes) long-term backup. Store: Virtual Tape Cartridges. 	// Tape drive: R/W. 
+		- Emulates a Tape Drive. 
+		- Data stored in S3: 
+			' VTL (Virtual Tape Library). 
+			' VTS (Tape Shelf Glacier). 
+		- Virtual Tape: 100GB - 5TB. 
 
 
 
@@ -1815,7 +2170,7 @@ ____________________________________ CloudFormation (CFN) ______________________
 * JSON | YAML. 
 * At least one resource in template. 
 * Stack states: REVIEW_IN_PROGRESS, CREATE_COMPLETE, DELETE_FAILED, UPDATE_*. 
-* A Stack can be updated: 
+* A Stack can be updated: 							// Update: no int, some int; replacement. 
 	+ Direct. 
 	+ Change sets. 
 	+ Can cause interruption & replacement. 
@@ -1862,6 +2217,233 @@ ____________________________________ CloudFormation (CFN) ______________________
 
 
 * OpsWorks: config mgmt service of Chef and Puppet. 
+
+* DNS: 
+	+ Internet Assigned Numbers Authority (IANA): controls top-level domain names on the internet. 
+	+ A Record: converts a domain name directly into an IP address. 
+	+ CNAME: converts a domain name into another domain name. 
+	+ Name Server (NS) Records: say which servers contain the DNS zone file for a domain. 
+
+
+* Disaster Recovery: process of planning for and responding to events that can cause data loss or system downtime. 
+	+ Disasters can be: natural (earthquake, flood) | artificial (cyber attack). 
+	+ Consequences: financial loss, damage to reputation, legal issues. 
+	+ A solid disaster recovery plan: 
+		- Ensures business continuity. 
+		- Minimizes downtime. 
+		- Safeguards data integrity. 
+
+// Managing a Disaster Recovery Site is very expensive, much maintenance, special skilled team needed. 
+// Minimizes downtime, data loss. 
+// Affordable, maintainable, reliable. 
+* Elastic Disaster Recovery (DRS): fully managed for physical, virtual, cloud-based servers. 
+	+ Source Servers: we want to replicate/protect. 
+	+ Staging Area: location where AWS will receive the replicated data. 
+	+ Launch Template: configure the specifications of recovery servers (size, region/subnet, SG). 
+// Download and install AWS Replication Agent into on-prem server: source. 
+// Cloud: { Stagin Subnet -> data replicated to EBS volumes. 
+//            { Recovery Subnet: EC2. DISASTER!: Up within minutes, latest data. 
+	+ Real-Time sync. 
+	+ Automated drills. 
+	+ Fail back after recovery. 
+
+
+* Serverless Application Framework/Model (SAM): extension of CFN. Toolkit to simplify building/running serverless apps. 
+	+ SAM Template: config file. Define infra. YAML | JSON. 
+	+ CLI: init > build > local invoke > package > deploy  > logs > validate > publish. 
+	+ Template is packaged with the app and uploaded to S3. 
+
+
+* Timestream: fast, scalabale time-series DB.					// Time-Series DB: IoT: high volume of data in real-time. Evolving data sources. Data becoming less relevant over time. 
+	+ Store & analize trillions of events per day. 
+	+ Serverless. 
+	+ Dynamic Schema. 
+	+ Data Partition: indexes. 
+	+ Data Lifecycle: in-mem store -> magnetic. 
+	+ Custom Query Engine. 
+
+
+* SES (Simple Email Service): 
+	+ Verified Identities. 
+	+ Config sets. 
+	+ Dedicated IPs. 
+	+ Email Receiving Info. 
+	+ Use cases: 
+		- Automate txn messages. 
+		- Bulk email communication. 
+
+
+* Simple Workflow Service: fully-managed State Tracker & Task Coordinator. 
+	+ Workflow orchestration. 
+	+ Task assignment and scheduling. 
+	+ Use if I need external signals and/or launch child processes + return result. 
+	+ Use cases: media processing, web app backends, business processes. 
+
+
+* Managed Apache Airflow (MWAA): managed orchestration for Apache Airflow. 
+	+ Simplified deployment & mgmt. 
+	+ Scalable, perf optimization. 
+	+ HA, fault tolerance. 
+	+ Managed Control Plane. 
+
+
+* EMR (Elastic Map-Reduce): sourcing data from a source (like S3) into a Big Data framework (Hadoo, Spark). 
+	+ Cluster: collection of EC2 instances (nodes). 
+	+ Primary Node: manages cluster. 
+	+ Core Node: stores data in HDFS. 
+	+ Task Node: data processing. 
+	+ Add/remove nodes as I need. 
+
+
+
+* X-Ray: tracing tool to analize/debug distributed apps. Collects data on requets made by the app & provides details + downstream calls. 
+	+ Receives traces from AWS services. 
+	+ Trace: represents a single request. A collection of segments. 
+	+ Segment: represents a unit of data. 
+	+ App has to be instrumented to send the traces. 
+
+
+
+* Trusted Advisor: tool that provides real-time guidance to follow best practices. 
+	+ Optimize Cost. 
+	+ Performance. 
+	+ Security. 
+	+ Fault Tolerance (reliability). 
+	+ Service Quotas. 
+
+
+
+
+* Launch Wizard: deploy well-known 3rd party apps with pre-configured templates with ideal settings. 
+	+ Choose app from catalog > Enter specifications > Get recommendations & cost estimate > Approve > Template gets created > Deployment. 
+
+
+
+* Accounts: centralized Account mgmt, consolidated billing, SSO. 
+	+ Service Control Policies (SCP): what users are allowed to do in an account. 			// What an entire account can do. 
+
+
+* Control Tower: manage accounts. 								// Account orchestraror. 
+	+ Landing Zone: foundation to quickly deploy accounts. 
+	+ Guardrails: Preventive, Detective. 
+	+ Account Factory: provisions account. 
+	+ OU: Organizational Unit. 
+
+
+* Systems Manager: manage servers. 
+	+ Inventory of servers. 
+	+ SSM Agent: runs on EC2, on-prem. Communicates with Systemas Manager. 
+	+ Centralized Control. 
+	+ Resource Grouping. 
+	+ Automation. 
+	+ Patch Management. 
+	+ Operational Insights. 
+	+ Config mgmt. 
+	+ Remote mgmt. 
+	+ Hybrid capabilities. 
+	+ App management: 
+		- App Manager. 
+		- Parameter Store. 
+	+ Change management: 
+		- Change Manager. 
+		- Automation: of IT tasks. 
+		- Change Calendar. 
+		- Maintenance Windows. 
+	+ Node management: 
+		- Compliance. 
+		- Inventory. 
+		- Session Manager. 
+		- Run Command. 
+		- State Manager. 
+		- Patch Manager. 
+		- Distributor. 
+	+ Ops management: 
+		- Incident Manager. 
+		- OpsCenter. 
+
+
+* License Manager: manage SW licenses. 
+	+ Define License configs > Apply to resources > LM enforces rules > Tracking and reporting. 
+	+ Centralized. 
+	+ Cross-Account. 
+	+ Discovery & reporting. 
+
+
+* Proton: standardize app stack to create consistent envs. 
+	+ Env Template. 
+	+ Service Template. 
+	+ Automated Deployments. 
+	+ Flexible Definitions. 
+	+ Proton Service Components. 
+	+ Multi-Account. 
+
+
+
+* Resource Group & Tag Manager: 
+	+ Group resources based on tags. 
+
+
+* Resilience Hub: centralized console where I can manage and automate: 
+	+ Backup Schedules. 
+	+ Recovery Point Objectives (RPO). 
+	+ Recovery Time Objectives (RTO). 
+	+ Continous Tracking. 
+	+ Describe App & Resources > Define Resilience Policies > Run Assesments > Review > Implement Recommendations. 
+
+
+
+
+* Resource Explorer: search & discovery of AWS resources, accross regions. 
+	+ Admin. 
+	+ User. 
+	+ Index: collection of info about AWS resources in a region. 
+		- Local. 
+		- Aggregator. 
+
+
+
+
+* Resource Access Manager (RAM): share resources accross accounts. 
+	+ Create a resource > Select resources to share > Choose principals > Accept request at receiving account > Monitor. 
+
+
+
+* Verified Permissions: manage permissions in my app. 
+
+
+
+* Private Certificate Authority (CA): scalable, secure solution for managing private certs within an organization. 
+	+ For internal communication in my company. 						// Not for the internet. 
+
+
+
+
+* NACLs VS SGs:
+	+ NACL (Netw Access Control List): layer of security for my VPC that acts as a subnet firewall. 
+		- Can be associated with multiple subnets. 
+		- Rules: 
+			' #: priority. 
+			' Proto: tcp/udp. 
+			' Action: allow | deny. 
+		- A new subnet is assigned a default NACL: ALL access allowed. 
+		- Stateless. 								// Dumb, "naco". 
+	+ Security Groups: virtual firewall for each invidual EC2 instance. 				// "Personal" security. 
+		- Statefull. 
+		- Allow only rules. Inbound | Outbound. 
+		- Associate with multiple instances. 						// Example: "web servers". 
+		- Associate 2 SG with a single EC2 instance, rules get merged. 
+		- VPC-specific. 
+
+
+
+
+
+
+* Security Lake: collects logs from multiple sources like on-prem, accounts, other cloud providers. 
+	+ In S3 buckets. 
+	+ Collect logs > Stored in S3 > Normalize into OCSF > Query. 
+
+
 
 
 

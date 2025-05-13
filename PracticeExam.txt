@@ -1,0 +1,1858 @@
+ý1.- We build container-based apps, use K8 on-premises docker based orchestration. 
+Move to AWS (preferably not manage infra). 
+	Options: 
+		+ AWS ECS. 
+		+ AWS EC2 with Kubernetes installed. 
+		+ AWS DynamoDB. 
+		+ AWS Elastic Beanstalk. 
+============================================================================================================================================> ECS. 
+
+
+
+
+
+
+
+
+
+ý2.- Leverage and integrate AWS storage with current on-premises infra. 
+Ensure low latency access to ALL data. 
+	+ Configure Storage Gateway Cached Volume. 
+	+ Configure the Simple Storage Service. 
+	+ Configure Storage Gateway Stored Volume. 
+	+ Configure Amazon Glacier. 
+============================================================================================================================================> Configure Storage Gateway Stored Volume. 
+
+
+
+
+
+
+
+
+
+
+ý3.- Critical long-running apps hosted on Docker. 
+Ensure scalability & container orchestration requirements. 
+	+ Use Amazon ECS and Service Auto Scaling. 
+	+ Use Amazon Lightsail containers for orchestration. 
+	+ Use Spot Instances to orchestrate and scale containers on existing Amazon EC2 instances. 
+	+ Use Auto Scaling groups to launch containers on existing Amazon EC2 instances. 
+============================================================================================================================================> Use Amazon ECS and Service Auto Scaling. 
+
+
+
+
+
+
+
+
+
+
+ý4.- Set of EC2 Instances hosted in a VPC, in a private subnet now need to access resources stored in an S3 bucket. 
+The traffic should not traverse the internet. 
+	+ NAT Gateway. 
+	+ NAT Instance. 
+	+ Internet Gateway. 
+	+ VPC Endpoint. 
+=====================================================================================================> VPC Endpoint. 
+
+
+
+
+
+
+
+
+
+
+ý5.- Implement CI/CD in AWS. 
+Customer currently = on-prem Chef. 
+	+ AWS Elastic Beanstalk. 
+	+ AWS OpsWorks. 
+	+ Amazon Simple Workflow Service. 
+	+ AWS CloudFormation. 
+=======================================================================================================> AWS OpsWorks. 
+
+
+
+
+
+
+
+
+
+
+ý6.- Web app has around 100 background job requests per second. 
+Another EC2 instance is set up to process the jobs. 
+Integrate apps together to meet the demand of requests without batching?
+	+ AWS SNS. 
+	+ AWS SQS Standard
+	+ AWS SQS FIFO. 
+	+ AWS ASG. 
+==================================================================================================================> AWS SQS Standard. 
+
+
+
+
+
+
+
+
+
+ý7.- Ensure EBS Volumes are available in event of disaster. (Choose 2). 
+	A: Configure Amazon Storage Gateway with EBS volumes as the data 
+	source and store the backups on premise through the storage gateway. 
+	B: Create snapshots of the EBS Volumes. 
+	C: Ensure the snapshots are made available in another availability zone. 
+	D: Ensure the snapshots are made available in another region. 
+=====================================================================================================> B, D. 
+
+
+
+
+
+
+
+
+
+
+ý8.- Set of EC2 Linux instances. 
+How to have a standard file interface for files to be used across all of them? 
+	+ Consider using AWS EFS. 
+	+ Consider using Amazon Glacier. 
+	+ Consider using the Simple Storage Service. 
+	+ Consider using AWS RDS. 
+====================================================================================================> EFS. 
+
+
+
+
+
+
+
+
+
+
+ý9.- Run several administrative scripts using AWS Lambda. 
+Detect and monitor errors that occur during the execution of these scripts. 
+	A: Use AWS Config to monitor for errors. 
+	B: Use Amazon CloudWatch metrics and logs to watch for errors. 
+	C: Use AWS CloudTrail to monitor for errors. 
+	D: Use AWS Inspector to monitor for errors. 
+===================================================================================================> B. 
+
+
+
+
+
+
+
+
+
+
+ý10.- We're launching EC2 Instances for PROD web app. 
+Instruct the ops dept on which service to use for monitoring. 
+	+ AWS Cloudwatch. 
+	+ AWS Cloudtrail. 
+	+ AWS SQS. 
+	+ AWS SNS. 
+===================================================================================> AWS Cloudwatch. 
+
+
+
+
+
+
+
+
+
+
+ý11.- App running on an EC2 instance in its default VPC. 
+Enable SSH access to the instance. 
+	+ Create a Security Group with an outbound rule allowing traffic on port 22, then attach it to the running instance. 
+	+ Create a Network ACL (NACL) with an inbound rule allowing traffic on port 22, then attach it to the running instance. 
+	+ Create a Security Group with an inbound rule allowing traffic on port 22, then attach it to the running instance. 
+	+ Create a Security Group with an outbound rule allowing traffic on port 443, then attach it to the running instance. 
+=========================================================================================================================================> Poke a hole in the SG inbound p:22. 
+
+
+
+
+
+
+
+
+
+
+ý12.- VPC with Subnet & IGW. EC2 instance in this subnet has a public IP address & the correct SG. 
+However, I can't connect to it from the Internet. 
+Most likely action needed to resolve this issue: 
+	+ Ensure the correct route entry is present in the route table. 
+	+ Add a secondary private IP address to the EC2 instance. 
+	+ Assign an Elastic IP address to the EC2 instance. 
+	+ Check the system logs on the EC2 instance for potential issues. 
+========================================================================================================> Ensure the correct route entry is present in the RT. 
+
+
+
+
+
+
+
+
+
+ý13.- App currently using NAT instance must be updated to use NAT GW instead. 
+	+ Host the NAT instance in a private subnet. 
+	+ Use NAT instances along with the NAT Gateway. 
+	+ Convert the NAT instance to a NAT Gateway. 
+	+ Migrate from the NAT instance to a NAT Gateway and host the NAT Gateway in a public subnet. 
+===============================================================================================> Migrate from NAT instance -> NAT GW (public subnet). 
+
+
+
+
+
+
+
+
+
+
+
+ý14.- Workflow sends videos from on-prem to AWS. EC2 worker instances pull jobs from SQS. 
+Ideal way to use SQS: 
+	A: SQS should be used to synchronously manage the transcoding output. 
+	B: SQS should be used to facilitate horizontal scaling of encoding tasks. 
+	C: SQS should be used to guarantee the order of the messages. 
+	D: SQS should be used to check the health of the worker instances. 
+=======================================================================================================> B. 
+
+
+
+
+
+
+
+
+
+
+ý15.- Multi-tier serverless app. 
+AWS services for Data, Logic, and Presentation tiers? (Select 3)
+	A: S3. 
+	B: DynamoDB. 
+	C: ALB and ECS. 
+	D: API Gateway and Lambda. 
+	E: RDS. 
+=================================================================================================> A, B, D. 		// S3: Presentation, APIGW: Logic, DDB: Data. 
+
+
+
+
+
+
+
+
+
+ý16.- Thousands of EC2 instances generate JSON logs that need to be frequently accessed and analyzed for 30 days. 
+After that, rarely accessed. Logs must be retained for 7y. 
+	A: Use AWS System Manager Automation to execute a script on a daily schedule. 
+	The script will collect the various JSON logs into a single zip archive and then copy the archive to a bucket with S3 Standard-IA. 
+	Analyze the logs using Athena. Use a Lifecycle policy to transition logs to Glacier. 
+	B: Install the CloudWatch Agent on all EC2 instances via AWS System Manager Run Command. 
+	Have logs streamed to CloudWatch Logs. Analyze logs using CloudWatch Insights. 
+	C: Use CloudWatch Event to periodically run an AWS Lambda twice a day parses and bulk inserts JSON logs into CloudTrail. 
+	D: Use AWS System Manager Automation to execute a script on a daily schedule. 
+	The script will collect the various JSON logs into a single zip archive and then copy the archive to a bucket with S3 Standard Access. 
+	Analyze the logs using Athena. Use a Lifecycle policy to transition logs to Glacier Deep Archive. 
+===========================================================================================================================================================================================================================================================> D. 
+
+
+
+
+
+ý17.- App running on EC2 instance uses 150 GB relational DB that experiences frequent, high-volume R/W ops. 
+Which storage type is the most cost-effective for this application?
+	+ Amazon EBS General Purpose SSD. 
+	+ Amazon EBS Throughput Optimized HDD. 
+	+ Amazon EFS. 
+	+ Amazon EBS Provisioned IOPS SSD. 
+=====================================================================================================> Amazon EBS General Purpose SSD. 	//CHEAPEST!
+
+
+
+
+
+
+
+
+
+
+ý18.- Design DR plan for a PROD web app that uses RDS DB that is auto backed up with cross-region snapshot replication. 
+Includes ALB & ASG. 
+The plan must be cost-effective and allow infra to be replicated in another region during a regional failure. 
+	+ Create an exact duplicate of the infrastructure in another region with the RDS snapshot restored regularly. 
+	No cost-effective solution can avoid downtime. 
+	+ Create a duplicate of the infrastructure in another region. Set the Auto Scaling Group's minimum capacity 
+	to 0 instances, and increase it to production requirements when needed. Restore the RDS snapshot. 
+	+ Create a CloudFormation template defining all the AWS resources. Launch the template 
+	in another region when needed, and restore the RDS snapshot. 
+	+ Duplicate the infrastructure in Elastic Beanstalk in another region. Restore the RDS snapshot. 
+==================================================================================================================================================================================================> CloudFormation. 
+
+
+
+
+
+
+ý19.- Select storage solution for continuously processing large amounts of data. 
+W throughput of 500 MiB/s. 
+	+ EBS General Purpose SSD. 
+	+ EBS Throughput Optimized HDD. 
+	+ EBS Cold HDD. 
+	+ EBS Provisioned IOPS SSD. 
+=================================================================================================> EBS Throughput Optimized HDD. 
+
+
+
+
+
+
+
+
+
+
+ý20.- DB: durable, ACID-compliant, capable of undergoing schema changes without downtime. 
+	+ Amazon Aurora. 
+	+ Amazon Redshift. 
+	+ Amazon S3. 
+	+ Amazon DynamoDB. 
+====================================================================================================> Amazon Aurora. 		//DDB is not ACID-compliant!!! 
+
+
+
+
+
+
+
+
+
+
+
+ý21.- Dev team needs to restructure their SaaS solution's app layer. 
+Ensure it can auto scale to meet varying request volumes. Serverless. 
+	A: Amazon DynamoDB and AWS Code Deploy. 
+	B: Amazon Cognito and Amazon DynamoDB. 
+	C: Amazon API Gateway and AWS Lambda. 
+	D: Amazon Elastic Beanstalk and an Application Load Balancer. 
+=======================================================================================================> C. 
+
+
+
+
+
+
+
+
+
+
+ý22.- Redshift cluster needs to import petabytes of data from S3. Both in same region. 
+Best practices to securely transfer data from S3 to Redshift (select 2): 
+	A: Use AWS Snowball to physically transfer the data to Redshift. 
+	B: Enable Amazon Redshift Enhanced VPC Routing to route traffic through the VPC. 
+	C: Configure a VPC Interface Endpoint for S3 to ensure secure access. 
+	D: Set up a VPC Gateway Endpoint for S3 to ensure secure data transfer. 
+	E: Enable AWS Key Management Service (KMS) for encryption on both S3 and Redshift. 
+=======================================================================================================================> B, D. 
+
+
+
+
+
+
+
+
+
+ý23.- Ensure IT admin staff can connect via port 22 to EC2: 
+	+ Configure the IAM role to permit changes to security group settings. 
+	+ Adjust Security Group to permit egress traffic over TCP port 443 from your IP. 
+	+ Modify the instance SG to allow ingress of ICMP packets from your IP. 
+	+ Adjust the instance’s SG to permit ingress traffic over port 22 from your IP. 
+	+ Apply the most recently released Operating System security patches. 
+=======================================================================================================================> Poke a hole SG: inbound p:22 from my IP. 
+
+
+
+
+
+
+
+
+
+
+ý24.- For data stores, company does not want to manage underlying infra (choose 2): 
+	A: AWS EBS Volumes. 
+	B: AWS S3. 
+	C: AWS EC2. 
+	D: AWS DynamoDB. 
+==============================================================================================> B, D. 
+
+
+
+
+
+
+
+
+
+
+
+ý25.- Most secure way for EC2 app to interact with DynamoDB: 
+	A: Create an IAM role with the necessary permissions and assign it to the EC2 instance. 
+	B: Use the API credentials from a bastion host. Make the application on the EC2 instance send 
+	requests via the bastion host. 
+	C: Use the API credentials from the EC2 instance. Ensure the environment variables are updated 
+	with the API access keys. 
+	D: Use the API credentials from a NAT Instance. Make the application on the EC2 instance send 
+	requests via the NAT instance. 
+=====================================================================================================================================================================================================> A. 
+
+
+
+
+
+
+
+
+ý26.- Securely connect on-premise env to AWS. 
+	+ AWS Secure Connect. 
+	+ AWS VPN. 
+	+ AWS Direct Connect. 
+	+ AWS Private Link. 
+==================================================================================================> VPN. 	//Cheaper & easier. 
+
+
+
+
+
+
+
+
+
+
+
+ý27.- Block-level storage for 800 GB + enc. 
+	+ AWS EBS Volumes. 
+	+ AWS Glacier. 
+	+ AWS S3. 
+	+ AWS EFS. 
+==============================================================================================> EBS. 	//B: Block. 
+
+
+
+
+
+
+
+
+
+
+
+ý28.- DynamoDB provisioned throughput = 100 RW/s. 
+During peak hours, W reach 500/s causing excess W to be dropped. 
+Most cost-effective solution: 
+	+ Turn on Auto Scaling for write capacity. 
+	+ Use Amazon SQS as a buffer. 
+	+ Change the read/write capacity mode to On-Demand. 
+	+ Use Amazon Kinesis Data Streams as a buffer. 
+==========================================================================================> SQS. 
+
+
+
+
+
+
+
+
+
+ý29.- Recover a volume in case of AZ failure (not concerned with downtime, save costs). 
+	A: Continuously create Snapshots and copy Snapshots to another Region. 
+	B: Backup the contents of the EBS volumes to S3 with Sync command. 
+	C: Continuously create Snapshots. 
+	D: Use EFS since it is already highly available. 
+	E: Continuously create Snapshots and copy Snapshots to another AZ. 
+==========================================================================================> C. 			// Snapshots are stored in S3 (replicated 3 AZs). 
+
+
+
+
+
+
+
+
+
+
+ý30.- EC2 instance runs MongoDB. Requires max 10,000 IOPS. 
+	+ EBS General Purpose SSD. 
+	+ EBS Provisioned IOPS SSD. 
+	+ EBS Cold HDD. 
+	+ EBS Throughput Optimized HDD. 
+===========================================================================================> EBS General Purpose SSD. 
+
+
+
+
+
+
+
+
+
+
+
+ý31.- Best DB for JSON like data: 
+  + Data must remain HA by default. 
+  + Guarantee of reads at any scale.  
+	+ Amazon Redshift. 
+	+ RDS. 
+	+ DynamoDB. 
+	+ Aurora. 
+	+ DocumentDB. 
+=======================================================================================> DynamoDB. 
+
+
+
+
+
+
+
+
+ý32.- Cheapest EBS for relational DB running on EC2 with infrequent use, 100GB. 
+	+ EBS Cold HDD. 
+	+ EBS Throughput Optimized HDD. 
+	+ EBS General Purpose SSD. 
+	+ EBS Provisioned IOPS SSD. 
+==============================================================================> EBS Cold HDD. 
+
+
+
+
+
+
+
+
+
+
+
+ý33.- Web app behind ALB needs access to S3. Do not expose objects directly to the Internet. 
+	+ Use a VPC Endpoint. 
+	+ Apply an ACM SSL Certificate to the Application Load Balancer. 
+	+ Turn off the Internet Gateway to the S3 Bucket. 
+	+ Use Server-Side Encryption on the S3 Bucket. 
+========================================================================================> VPC Endpoint. 
+
+
+
+
+
+
+
+
+
+
+
+ý34.- RDS DB cannot handle the growing number of queries. Improve performance: 
+	+ Use Amazon ElastiCache in front of the database. 
+	+ Use an Application Load Balancer in front of the web application. 
+	+ Use Amazon ElastiCache in front of the web application. 
+	+ Use Amazon CloudFront in front of the web application. 
+=======================================================================================> ElastiCache in front of the DB. 
+
+
+
+
+
+
+
+
+
+
+
+ý35.- App needs 6 instances running at all times, cannot afford downtime. Region has 3 AZs. (Select 3): 
+	A: Create an Auto Scaling Group configured to run in all AZs. Set Min Capacity Setting to 9. 
+	B: 3 Instances in us-east-2a, 3 in us-east-2b. 
+	C: 3 Instances in us-east-2a, 3 in us-east-2b, and 3 in us-east-2c. 
+	D: 2 Instances in us-east-2a, 2 in us-east-2b, and 2 in us-east-2c. 
+	E: 6 Instances in us-east-2a, and 6 in us-east-2b. 
+=============================================================================================================> A, C, E. 
+
+
+
+
+
+
+
+
+
+
+ý36.- App needs 8 instances, can tolarate a single AZ failure. 
+Lowest cost possible: 
+	A: 2 instances in Availability Zones a through e. 
+	B: 8 instances in Availability Zones a through b. 
+	C: 4 EC2 instances in Availability Zones a through c. 
+	D: 3 instances in Availability Zones a through d. 
+=========================================================================================> C. 			// The more AZs, the $$$$. 
+
+
+
+
+
+
+
+
+
+
+ý37.- Audit inbound IPs on EC2 instance: 
+	+ VPC Flow Logs. 
+	+ CloudWatch Logs. 
+	+ CloudTrail. 
+	+ EC2 Metadata. 
+==========================================================================================> VPC Flow Logs. 
+
+
+
+
+
+
+
+
+
+
+
+ý38.- How can DynamoDB data be enc at rest? 
+	A: Turn on Enhanced VPC Routing. 
+	B: Turn on DynamoDB Accelerated Encryption (DAX). 
+	C: Use the AWS managed Customer Master Key. 
+	D: Use the IAM Password Policy. 
+	E: Use Customer Managed Keys with AWS KMS. 
+======================================================================================> E. 
+
+
+
+
+
+
+
+
+
+
+ý39.- Internal website via S3 + CloudFront configured to restrict access to authenticated users. 
+However URL is still publicly accessible, allowing unauthorized users to access the content. 
+Enforce access only through CloudFront (select 2): 
+	A: Block all public access. 
+	B: Turn on versioning. 
+	C: Create an Origin Access Identity (OAI). 
+	D: Use S3 pre-signed URLs. 
+	E: Update the bucket policy to ensure public access is not granted. 
+===================================================================================================> C, E. 
+
+
+
+
+
+
+
+
+ý40.- Capture real-time clickstream data. 
+	A: Amazon Kinesis Data Streams. 
+	B: Amazon Kinesis Data Analytics. 
+	C: Amazon MSK (Managed Streaming for Apache Kafka). 
+	D: Amazon Kinesis Data Firehose. 
+======================================================================================> A. 
+
+
+
+
+
+
+
+
+
+
+
+ý41.- Containerized app runs on ECS (single cluster) is used by multiple customers for data analysis. 
+Ensure each customer’s container is isolated to maintain privacy. 
+	A: Use IAM roles for tasks. 
+	B: Use SGs between containers. 
+	C: Use IAM roles for services. 
+	D: Use IAM roles for ECS. 
+==============================================================================================> A. 
+
+
+
+
+
+
+
+
+
+
+ý42.- HPC app requires lowest possible latency between EC2 instances. 
+Best Placement Group:
+	A: Partition Placement. 
+	B: Packed Placement. 
+	C: Cluster Placement. 
+	D: Performance Placement. 
+	E: Spread Placement. 
+============================================================================================> C. 			// Close together, same AZ. 
+
+
+
+
+
+
+
+
+
+ý43.- App in private IPv4 subnet needs to fetch package from the Internet. 
+	A: Launch a NAT GW in a public subnet and create a route in the private subnet's RT for 0.0.0.0/0 
+	pointing to the NAT GW. 
+	B: Create a VPN connection by launching a Virtual Private Gateway (VPG) in the public subnet 
+	and a Customer Gateway in the private subnet. Create a route in the private subnet's RT for 
+	0.0.0.0/0 pointing to the VPG. 
+	C: Add an outbound ALLOW rule to both the NACL and SG for 0.0.0.0/0 to allow internet access for the app. 
+	D: Create an IGW, and a route in the private subnet's RT for 0.0.0.0/0 pointing to the IGW. 
+====================================================================================================================================================================================================================================================> A. 
+
+
+
+
+
+
+
+
+ý44.- Solution to collect, process, & store users' service usage data. 
+Goal: create analytics capability to gather op insights quickly using SQL. 
+Solution must be HA, ACID @ data tier. 
+	Options: 
+		+ Timestream. 
+		+ Neptune Multi-AZ. 
+		+ Fully Managed RDS-MySQL DB Multi-AZ. 
+		+ PostgreSQL on EC2. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> RDS MySQL Multi-AZ. 
+
+
+
+
+
+
+
+
+ý45.- CloudTrail logs deliver files to S3 bucket for each of its dev accounts. 
+Central Account for streamlining management & audit reviews. 
+Internal auditor needs to access logs. 
+	A: Lambda in each dev account to copy logs + IAM role in central account + 
+	IAM policy read-only perms to bucket. 
+	B: Config CloudTrail from each dev account to deliver logs to S3 bucket in central account. 
+	IAM user in central account + IAM policy full perms to bucket. 
+	C: Config CloudTrail from each dev account to deliver logs to S3 bucket in central account. 
+	IAM role in central account + IAM policy read-only perms to bucket. 
+	D: Lambda in central account to copy logs + IAM user + IAM policy full perms to bucket. 
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+ý46.- REST-based IF allows data to be received near-real time from 3rdP. 
+App processes & stores data for further analysis. Running on EC2. 
+3rdP received many 503 errors. 
+Design a more scalable solution. 
+	A: Kinesis to ingest data + Lambda. 
+	B: API GW + Usage Plan with Quota Limit. 
+	C: SNS + ASG + ALB. 
+	D: Repackage app as container. Deploy via ECS with EC2 Launch Type with ASG. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+ý47.- Insufficient swap space on failed instances. Monitor: 
+	+ CloudWatch SwapUsage metric. 
+	+ EC2 metadata. 
+	+ Install CloudWatch Agent, run scheduled script, SwapUtilization metric. 
+	+ Enable detailed monitoring in EC2 Console. 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> Install CloudWatch Agent on instance, run script on schedule, monitor SwapUtilization Metric in CloudWatch. 
+
+
+
+
+
+
+
+
+
+
+
+ý48.- Set of apps that make use of Docker containers. Move these containers to AWS. 
+Set up these Docker containers in a separate environment in AWS: 
+	A: Create EC2 Container registries, install Docker, and then upload the containers. 
+ 	B: Create EC2 Instances, install Docker, and then upload the containers. 
+	C: Create an Elastic Beanstalk environment with the necessary Docker containers. 
+	D: Create EBS Optimized EC2 Instances, install Docker, and then upload the containers. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+ý49.- Microservice architecture -> deploy to AWS. +15m to complete. Containerized. 
+AWS service requires the least management and is also the most cost-effective: 
+	A: Elastic Beanstalk. 
+	B: ECS. 
+	C: Fargate. 
+	D: Lambda. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+ý50.- Parent company wants to share S3 bucket with branch office (separate Account). 
+Restrict access to objects. (Select 2).
+	A: Signed Cookies. 
+	B: Bucket Policies. 
+	C: Presigned URLs. 
+	D: Signed URLs. 
+	E: Access Control Lists (ACLs). 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, E. 
+
+
+
+
+
+
+
+
+
+ý51.- Both PROD and DEV envs in a VPC. 
+PROD: ASG + ALB, 3 AZs. 
+DEV: E Beanstalk HA tier. 
+Reduce costs. Select all that apply. 
+	A: Both envs share ALB. 
+	B: RIs for PROD. 
+	C: Spot Instances for DEV. 
+	D: Remove PROD ALB. 
+	E: Reconfig DEV to use free-tier resources where possible. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, E. 
+
+
+
+
+
+
+
+ý52.- A company is designing a multi-tier serverless application and needs to choose the most suitable AWS services 
+for each tier: Presentation (Frontend), Logic (Backend), and Data (Database/Storage). 
+Which of the following AWS services would best fit a serverless architecture for this use case? 
+	A: ASG + EC2. 
+	B: DynamoDB. 
+	C: S3. 
+	D: Amazon RDS (Aurora Serverless v2). 
+	E: API GW + Lambda. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, C, E. 	// Aurora "serverless" IS NOT TRULLY SERVERLESS!!! 
+
+
+
+
+
+
+
+
+ý53.- EC2 instances support an app in the US. 
+Prepare for DR (quickly provision resources in another Region). (Select 2). 
+	A: Create Elastic IPs in the destination region. 
+	B: Create EBS Snapshots and then copy them to the destination region. 
+	C: Copy the underlying EBS Volumes to the destination region. 
+	D: Copy the metadata for the EC2 instances to S3. 
+	E: Create AMIs (Amazon Machine Images) for the underlying instances. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, E. 		// We copy SNAPSHOTS not volumes! 
+
+
+
+
+
+
+
+
+
+ý54.- Ensure DR & HA in case of regional failure. 
+The solution should automatically reroute traffic to a backup region if the primary region becomes unavailable. 
+SELECT 2:
+	A: Deploy app in 2 regions using CodeDeploy. 
+	B: Deploy app in 2 regions using Elastic Beanstalk in multi-instance, LB environment. 
+	C: Deploy app in 2 regions, each managed by an ASG. 
+	D: Deploy app in 2 regions using Lambda with API GW. 
+	E: Deploy identical versions of the web app in 2 regions, each using an ALB & ASG. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, E. 
+
+
+
+
+
+
+
+
+ý55.- Cost-optimized solution that balances performance & scalability for containerized apps. 
+Most cost-effective option between ECS, EC2 & Fargate launch type:
+	A: EC2 to leverage RI & Savings Plans for long-term cost savings. 
+	B: EC2 to take advantage of Spot Instances for non-critical workloads. 
+	C: Fargate for its fixed pricing model, which simplifies budgeting & cost mgmt. 
+	D: Fargate to avoid overhead costs of managing EC2 instances. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+ý56.- ECS containerized microservices app is experiencing fluctuating traffic. 
+Enhance performance efficiency:
+	A: Manually adjust # of ECS Tasks during peak hours. 
+	B: Use fixed # of ECS Tasks, rely on EC2 ASG. 
+	C: Implement ECS Task Auto-Scaling based on CPU + MEM metrics. 
+	D: Configure ECS Tasks to use Fargate Spot. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+ý57.- A cloud migration company is planning to shift their clients' applications from on-premises data centers to AWS. 
+A key requirement is to optimize costs while deploying their compute resources. 
+Currently, the majority of their applications are tightly coupled, monolithic architectures. 
+As a solutions architect, which recommendation would you make?
+	A: Refactor the monolithic apps to microservices, deploy ECS Fargate. 
+	B: Migrate apps to EC2, continously monitor rightsize & cost optimization. 
+	C: Deploy apps in a single EC2 instance, set up autoscaling to handle surge in demand. 
+	D: Lambda to run app, setting appropriate concurrency levels to manage cost. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+ý58.- A leading e-commerce company is planning to strengthen its data security by 
+encrypting its data-at-rest in an Amazon S3 bucket. 
+The company handles a large volume of payment data daily which is stored in Amazon S3 and 
+is accessed by multiple users from different geographic regions. 
+The company now wants to implement a solution that provides secure management and 
+control of cryptographic keys while still allowing its global users access to the payment data. 
+Which combination of steps should the e-commerce company implement? 
+Select TWO: 
+	A: Enable default enc on S3 bucket with KMS-C. Implement geo restricted access via S3 Access Points. 
+	B: Create S3 bucket in each geo region, enable KMS SSE-C. 
+	C: Use Glue to enc S3 data at rest via Job Bookmarks. 
+	D: Enable SSE on bucket with a KMS Customer-Managed Key. 
+	    Implement IAM Policies to control access to payment data. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A, B. 
+
+
+
+ý59.- 1 PB frequent acces data needs to be readily available. 
+500 TB rarely accessed but must be preserved. 
+Consider the cost of storage, retrieval, and accessibility. 
+SELECT 2: 
+	A: Both in Intelligent-Tiering if accessed > 4 times / year. 
+	B: Frequent = S3 Standard; Archival = One Zone-IA if accessed > 1 / quarter. 
+	C: Frequent = S3 Standard; Archival = Glacier Instant Retrieval if accessed < 1 / quarter. 
+	D: Both S3 Standard-IA. 
+	E: Archival = S3 Standard; Frequent = One Zone-IA. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, C. 
+
+
+
+
+
+
+
+ý60.- Web app has API hosted on Lambda that fetches data from DynamoDB. 
+Increase in demand is causing throttling and timeouts. 
+	A: DDB Autoscaling. 
+	B: Use API GW Caching to reduce # of calls made to backend. 
+	C: Shift to EC2. 
+	D: Increase R/W capacity of DDB. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+ý61.- Streaming Data Ingestion System in multiple countries. 
+Data must remain in region. 
+SELEC 2: 
+	A: Implement Kinesis Data Streams for each country / respective Region. 
+	    Design Kinesis Data Analytics app for near real-time proc. 
+	B: Create a global Kinesis Data Firehose delivery system. 
+	C: Separate S3 buckets in respective Regions. 
+	D: Lambda to proc records in Kinsesis Data Firehose delivery stream on-the-fly. 
+	E: Individual Kinesis Data Firehose delivery streams for each country. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, D. 
+
+
+
+
+
+
+
+ý62.- EC2 + RDS DR strategy for no downtime. 
+SELECT 2: 
+	A: Multi-AZ deployment of RDS. 
+	B: Establish a Pilot Light Scenario where min version of primary system always running. 
+	C: Enable Auto Recovery for EC2 when instance fail system status check. 
+	D: Schedule regular RDS snapshots for manual backup. 
+	E: Configure RDS to store data directly in S3, lifecycle policies to transition to Glacier for archiving. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A, C. 
+
+
+
+
+
+
+
+
+
+ý63.- Recover a volume in case of AZ failure (best solution): 
+	A: Regularly create EBS snapshots. 
+	B: Regularly create EBS snapshots and copy them to another AWS Region. 
+	C: Regularly create EBS snapshots and manually restore them in another AZ when needed. 
+	D: Use Amazon EFS instead of EBS for storage. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+
+ý64.- EBS for relational DB running on EC2 with infrequent use, 100GB. 
+Most cost-effective while ensuring adequate performance for the database workload. 
+	A: Cold HDD (sc1). 
+	B: Throughput Optimized HDD (st1). 
+	C: Provisioned IOPS SSD (io2). 
+	D: General Purpose SSD (gp3). 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+ý65.- Android app allows users to edit photos then sends them to backend API hosted on 
+EC2 that is becoming overloaded. 
+What is the most efficient way to offload the S3 upload workload from the backend instance? 
+	A: API GW + Lambda. 
+	B: SQS (async). 
+	C: ASG. 
+	D: Generate pre-signed S3 URLs on the backend and return them to the mobile app for direct uploads. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 	// Completely remove the need for backend to act as proxy for uploads. 
+
+
+
+
+
+
+
+
+
+ý66.- How should access keys be managed in AWS to align with best practices?
+SELECT 2: 
+	A: Use Amazon IAM roles instead of access keys where possible. 
+	B: Share access keys securely among multiple developers for collaboration. 
+	C: Use the same access key in all applications for consistency. 
+	D: Embed and encrypt access keys in code for continuous deployment. 
+	E: Delete all access keys for the account root user. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A, E. 
+
+
+
+
+
+
+
+
+
+ý67.- Best solution for app to perform full-text search on millions of log files. Storage, Web App, Search. 
+	A: S3, Athena, ALB. 
+	B: CloudWatch Logs, Athena, ALB. 
+	C: CloudWatch Logs, CloudWatch Logs Insights, Elastic Beanstalk (HA tier). 
+	D: S3, CloudSearch, Elastic Beanstalk (HA tier). 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+
+ý68.- Organizations manage multiple Accounts. One of these Accounts has a bucket. 
+EASIEST way to limit access to only users within the org: 
+	A: PrincipalOrgID global condition key -> org ID in bucket policy. 
+	B: Organizational Unit (OU) for each dept. PrincipalOrgPaths global condition key to bucket policy. 
+	C: CloudTrail. 
+	D: Tag each user + PrincipalTag global condition key to bucket policy. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+ý69.- Protect traffic that flows I/O PROD VPC. Traffic flow inspection & filtering. 
+	A: GuardDuty. 
+	B: Traffic Mirroring. 
+	C: Netw FW. 
+	D: FW Manager. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+
+ý70.- FASTEST WAY to clone PROD EBS Volumes to TEST env? 
+	A: Take Snapshots, restore onto EC2 Instance Store. 
+	B: EBS Multi-Attach. 
+	C: Take Snapshots, create & init new Volumes, attach to EC2 instance, restore. 
+	D: Take Snashots, enable Fast Snapshot feature, restore into new Volumes, attach to EC2 instance. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+
+ý71.- Unwanted Vertical Scaling of EC2 instances. 
+Easiest way to create a graph comparing last 2 months of EC2 costs + perform in-depth analysis to identify root cause. 
+	A: Budgets. 
+	B: Cost Explorer's Granular Filtering feature. 
+	C: Graphs from Billing & Cost Mgmt dashboard. 
+	D: Cost & Usage Reports -> S3 bucket -> QuickSight interactive graph. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+
+ý72.- Product Manager who doesn't have an AWS Account needs access to a CloudWatch Dashboard. 
+	A: Share it from CloudWatch Console. Enter PM's email & complete sharing steps. Send link. 
+	B: Create IAM user for the PM. 
+	C: Create IAM user for company's employees. 
+	D: Deploy a Bastion server in a public Subnet. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+
+ý73.- Accounts managed by Organizations. We need SSO solution accross accounts but must continue 
+managing users & groups in on-prem self-managed MS AD. 
+	A: Enable AWS SSO, create 1-way forest|domain trust. 
+	B: Enable AWS SSO, create 2-way forest trust. 
+	C: Create 2-way trust via AWS Directory Service. 
+	D: Deploy IdP on-prem. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+
+ý74.- App serves hundreds of thousands of users during peak hours needs a scalable, near-real-time solution 
+to share millions of financial TXNs with many other apps. They need to be processed to remove sensitive data. 
+	A: Store TXNs into DynamoDB, set up a rule there to remove sensitive data. 
+	B: Stream TXNs into Kinesis Data Firehose -> DDB & S3 + Lambda. Apps consume from S3. 
+	C: Stream TXNs Kinesis Data Streams + Lambda -> DDB. Apps consume off Kinesis. 
+	D: Store TXNs in S3 as files + Lambda -> DDB. Apps consume S3. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 		// Firehose cannot send data to DDB. 
+
+
+
+
+
+
+
+
+
+
+ý75.- We must use a KMS Customer Managed Key to enc/dec 2 S3 buckets in 2 regions. 
+EASIEST:
+	A: SSE-S3. 
+	B: Create Customer Managed Multi-Region Key & use client-side enc. 
+	C: Create Customer Managed Key & use server-side enc. 
+	D: Create Customer Managed Key & use server-side SSE-KMS. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+
+ý76.- Files accessed randomly first year, infrequently after that. Solution to query & retrieve files <y old quickly, 
+delay for older files acceptable. 
+CHEAPEST: 
+	A: Store files with tags in S3 Glacier Instant Retrieval. Query tags. 
+	B: Store files in S3 Intelligent-Tiering. Lifecycle policies -> Glacier Flexible Retrieval >1y. 
+	   Query & retrieve S3 via Athena. Query & retrieve Glacier with Glacier Select. 
+	C: Store files with tags in S3 Standard. Store search metadata in S3 Standard. 
+	    Lifecycle policies -> S3 Glacier Instant Retrieval >1y. Query & retrieve files searching metadata from S3. 
+	D: Store files in S3 Standard. Lifecycle policies -> S3 Glacier Deep Archive >1y. 
+	    Store search metadata in RDS. Query from RDS. Retrieve from Glacier. 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+ý77.- App provides order shiping statistics for retrieval by REST API. 
+We want to extract statistics, organize it in HTML, send report via email. 
+SELECT 2: 
+	A: Kinesis Data Firehose. 
+	B: SES. 
+	C: Create EventBridge scheduled event that invokes Glue job to query API. 
+	D: Create EventBridge scheduled event that invokes Lambda to query API. 
+	E: Store data in S3. Create SNS Topic as an S3 event destination to send emails. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, D. 
+
+
+
+
+
+
+
+
+ý78.- QSQ -> EC2 -> RDS. Occasional duplicate records are found on table but SQS does not contain duplicate messages. 
+Ensure messages are processed only once: 
+	A: CreateQueue API call to crate a new queue. 
+	B: AddPermission API call to add perms. 
+	C: ReceiveMessage API call & set appropriate wait time. 
+	D: ChangeMessageVisibility API call to increase visibility timeout. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+ý79.- EC2 bastion host in public subnet. Connect from on-prem netw via company's internet connection, 
+to bastion host, finally to app servers. 
+CHOOSE 2: 
+	A: SG bastion = allow inbound access from app instances. 
+	B: SG bastion = allow inbound access from internal IP range of the company. 
+	C: SG bastion = allow inbound access from external IP range of the company. 
+	D: SG app instances = allow inbound SSH access from only private IP of bastion. 
+	E: SG app instances = allow inbound SSH access from public IP of bastion. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, D. 
+
+
+
+
+
+
+
+
+ý80.- Keep data in DDB for 7 years, most operationally efficient solution: 
+	A: DDB Point-In-Time-Recovery to back up table continously. 
+	B: AWS Backup to create backup schedules & retention policies for the table. 
+	C: On-demand backup via DDB console. 
+	D: Create EventBridge rule to invoke a Lambda to backup table to S3. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+
+
+ý81.- Most secure way to share an AMI backed by EBS + KMS-C. 
+	A: Make enc AMI + snapshots public. 
+	B: Modify launchPermission property of AMI, share it with target Account, modify key policy to 
+	    allow partner to use it. 
+	C: Modify launchPermission property of AMI, share it with target Account, modify key policy to 
+	    trust a new key owned by the partner. 
+	D: Export AMI to S3 in target Account. 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+ý82.- ELBs use certificates imported into ACM. 
+Notify security team 30 d before a cert expires: 
+	A: Add rule in ACM to publish custom message to SNS. 
+	B: Create AWS Config rule that checks for certs that will expire. 
+	    Configure EventBridge to invoke custom alert by way of SNS. 
+	C: Use Trusted Advisor to check for certs that will expire. Create CloudWatch Alarm -> SNS. 
+	D: Create EventBridge rule to detect certs that will expire -> Lambda -> SNS. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+ý83.- Reduce cost of web, app, DB EC2 servers for DEV, TEST, PROD envs. AVG 30% CPU peak, 10% rest of the time. 
+Per day: PROD runs 24h, DEV & TEST 8h. They want to auto stop DEV & TEST instances when idle. 
+	A: Spot for PROD, RI for DEV & TEST. 
+	B: RI for PROD, On-Demand for DEV & TEST. 
+	C: Spot Blocks for PROD, RI for DEV & TEST. 
+	D: On-Demand for PROD, Spot Blocks for DEV & TEST. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+
+ý84.- US S3 bucket is 3TB in size and growing. We want to share with European marketing firm that has S3 buckets. 
+Keep transfer costs cheapest: 
+	A: Requester Pays. 
+	B: Cross-Region Replication. 
+	C: Cross-Account access. 
+	D: Intelligent-Tiering. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 	// European Marketing firm is external! 
+
+
+
+
+
+
+
+
+
+
+ý85.- Implementing shared storage for gaming app hosted on-prem. 
+We need to use Lustre clients to access data. Solution must be fully managed: 
+	A: Create Storage GW File GW. Create a file share that uses required client proto. 
+	    Connect app server to file share. 
+	B: EC2 instance, install & config Windows file share role, connect app server to file share. 
+	C: Create EFS FS, config it to support Lustre, attach fs to origin server, connect app server to fs. 
+	D: Create FSx for Lustre fs, attach fs to origin server, connect app server to fs. 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+ý86.- Data to be migrated into S3 must be enc. Enc key must be auto rotated every year. 
+Easiest solution: 
+	A: Move data to S3. Use SSE-S3 with built-in key rotation behavior. 
+	B: Create KMS-C, enable auto key rotation, set S3 bucket default enc to use it. Move data into S3. 
+	C: Create KMS-C, set bucket's default enc to use it. Move data to S3. Manually rotate key every year. 
+	D: Enc data with customer key material, move to S3, create KMS key with no key material, 
+	     import customer key material into KMS key, enable auto key rotation. 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+ý87.- EASIEST way to design app that captures API call when CreateImage (AMI) is called: 
+	A: Lambda to query CloudTrail logs. 
+	B: Configure CloudTrail with SNS notification when updated logs are sent to S3, 
+	    use Athena to create a new table. 
+	C: Create EventBridge rule for CreateImage API call. Configure target as SNS topic when API call is detected. 
+	D: Configure SQS FIFO Q a target for CloudTrail Logs. Lambda to send alert to SNS topic when 
+	    API call is detected. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+ý88.- Export DB daily to S3 for other teams to access. Object varies between 2 - 5 GB. 
+S3 access pattern for data is varible & changes rapidly. Data must be immediately available up to 3 months. 
+CHEAPEST: 
+	A: Intellent-Tiering. 
+	B: Glacier Instant Retrieval. 
+	C: Standard. 
+	D: Standard-Infrequent Acess. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+ý89.- Global web app in EC2 instances + ALB + Aurora. 
+Create a DR solution that can tolerate 30m downtime & data loss that does not need to handle load when primary 
+infra is healthy. 
+	A: Deploy app with required elements in place. Route 53 active-passive failover. Aurora Replica 2nd Region. 
+	B: Host scaled-down deployment 2nd Region. Route 53 active-active failover. Aurora Replica 2nd Region. 
+	C: Replicate primary infra in 2nd Region. Route 53 active-active failover. Aurora DB restored from latest snapshot. 
+	D: Back up data with AWS Backup. Use backup to create required infra in 2nd Region. 
+	    Route 53 active-passive failover. Aurora second primary instance 2nd Region. 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+ý90.- Stateful app is having perf issues. Needs to complete in-memory tasks on EC2s. 
+CloudFormation used to deploy infra M5 instances. As traffic increased, perf degraded. 
+Resolve issues MOST operationally efficient way: 
+	A: Replace instances with T3s in ASG. Make changes via Console. 
+	B: Modify CloudFormation templates to run instances in ASG. 
+	    Increase desired/max cap manually when needed. 
+	C: Modify CloudFormation templates. Replace instances with R5. 
+	    Use CloudWatch built-in EC2 MEM metrics. 
+	D: Modify CloudFormation templates. Replace instances with R5. 
+	    Deploy CloudWatch Agent on instances to generate custom app latency metrics. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+ý91.- Redesign app architecture to be HA & fault tolerant. Traffic must reach all instances randomly. 
+CHOOSE 2: 
+	A: Route 53 failover RP. 
+	B: Route 53 weighted RP. 
+	C: Route 53 multivalue answer RP. 
+	D: 3 instances: 2 in one AZ, 1 in another. 
+	E: 4 instances: 2 in one AZ, 2 in another. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, E. 
+
+
+
+
+
+
+
+
+
+ý92.- We collect data from millions of remote devices using RESTful web service app on EC2. 
+Instance receives raw data, transforms it, stores in S3. Solution = highly scalable, min operational overhead. 
+SELECT 2: 
+	A: Glue to proc raw data in S3. 
+	B: Route 53 -> EC2 instances. 
+	C: More instances. 
+	D: Send raw data to SQS, EC2 instances to proc data. 
+	E: API GW to send raw data to Kinesis Data Stream, Firehose -> S3. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A, E. 
+
+
+
+
+
+
+
+
+ý93.- Data Warehouse migrated to AWS. We have DX. Corporate office users query data using a visualization tool. 
+LOWEST data transfer egress cost: 
+	A: Host tool on-prem, query over internet. 
+	B: Host tool AWS Region, query over internet. 
+	C: Host tool on-prem, query DX. 
+	D: Host tool AWS Region, query DX. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+ý94.- LEAST amount of operational overhead solution for PostgreSQL DB. 
+Data must be available and online accross multiple AWS Regions at all times. 
+	A: Migrate to EC2 cluster. 
+	B: Migrate to RDS Multi-AZ. 
+	C: Migrate to RDS + Read Replica in another Region. 
+	D: Migrate to RDS + set up snapshots to be copied to another Region. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+ý95.- App uses ALB at least 2 instances + ASG per env (DEV, PROD). 
+MINIMIZE cost for DEV env: 
+	A: Reconfig TG in DEV to have only 1 instance as target. 
+	B: Change ALB balacing algo to Least Outstanding Requests. 
+	C: Reduce size of instances in both envs. 
+	D: Reduce max # instances in DEV ASG. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+ý96.- What needs to be done before adding an RDS Read Replica?
+CHOOSE 2: 
+	A: Enable binlog replication on primary node. 
+	B: Choose failover priority for source DB instance. 
+	C: Allow long-running TXNs to complete on source DB instance. 
+	D: Create global table, specify AWS Regions where table will be available. 
+	E: Enable auto backups on source instance by setting backup retention period != 0. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, D. 
+
+
+
+
+
+
+
+
+
+ý97.- Implementing shared storage solution hosted on AWS. Use SMB clients to access data, fully managed. 
+	A: Volume GW, create file share, connect app server to file share. 
+	B: Tape GW, config tapes to use S3, connect app server to tape GW. 
+	C: Create EC2 instance, install & config Windows file share role on instance, connect app server to file share. 
+	D: Create FSx for Windows File Server fs, attach fs to origin server, connect app server to fs. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+
+ý98.-  App runs as EC2s + Lambdas. VPCs with public + private subnets. Instances run in private subnet. 
+Lambda functions need direct netw access to instances. App will run for at least 1 year. 
+MAXIMIZE savings, keep netw latency low. 
+	A: EC2 Instance Savings Plan, connect Lambdas to private subnet. 
+	B: EC2 Instance Savings Plan, connect Lambdas to public subent. 
+	C: Compute Savings Plan, connect Lambdas to private subnet. 
+	D: Compute Savings Plan, keep Lambdas in the Lambda service VPC. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+ý99.- Allow team members to access buckets in 2 accounts: DEV & PROD. 
+Currently access to DEV buckets by using unique IAM users assigned to IAM group with appr perms. 
+I create an IAM Role in PROD with Policy granting access to bucket in PROD. 
+	A: Attach Admin Access Policy to DEV account users. 
+	B: Add DEV account as a Principal in Trust Policy of Role in PROD account. 
+	C: Turn off S3 Block Public Access feature. 
+	D: Create user in PROD account with unique creds for each team member. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+
+
+ý100.- Ensure DB HA, auto failover support < 40s, offload R off of Primary Instance, keep costs low as possible. 
+	A: RDS Multi-AZ instance deployment, create 1 Read Replica. R workload -> RR. 
+	B: RDS Multi-AZ cluster deployment, create 2 RR. R workload -> RRs. 
+	C: RDS Multi-AZ instance deployment, R workload -> secondary instances in Multi-AZ pair. 
+	D: RDS Multi-AZ cluster deployment. R workload -> Reader Endpoint. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+
+ý101.- New regulation: audit access at all levels of stored data. 
+On-prem infra running out of storage cap. Securely migrate data to AWS. 
+	A: DataSync -> S3. CloudTrail to log data events. 
+	B: Snowcone -> S3. CloudTrail to log mgmt events. 
+	C: S3 Transfer Acc -> S3. CloudTrail to log data events. 
+	D: Storage GW -> S3. CloudTrail to log mgmt events. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+ý102.- MOST secure way to share an RDS DB with an external auditor: 
+	A: Read Replica + IAM DB authN. 
+	B: Eport DB to text files -> S3, IAM user + grant access to bucket. 
+	C: Copy Snapshot of DB to S3, IAM user + share keys to the object. 
+	D: Create an enc Snapshot of the DB, share it, allow access to KMS enc key. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+
+ý103.- VPC = small range of IPs. EC2s increasing. EASIEST: 
+	A: Add additional CIDR block + subnets. 
+	B: Second VPC + Peering. 
+	C: Transit GW. 
+	D: Second VPC + VPN. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+
+ý104.- We have 2 backups of MySQL DB: mysqldump & RDS Snapshot. Create new DB in Aurora: 
+SELECT 2: 
+	A: Import RDS Snapshot directly. 
+	B: Upload Snapshot to S3, import. 
+	C: Upload dump to S3, import. 
+	D: DMS to import Snapshot. 
+	E: Upload dump to S3, DMS to import. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C, E. 
+
+
+
+
+
+
+
+
+
+ý105.- PB data across accounts = Lake Formation. 
+EASIEST way to share some data with eng team: 
+	A: Copy data to common account + IAM Role + Permission Policy. 
+	B: LF perms Grant command in each account. 
+	C: Data Exchange. 
+	D: LF Tag-Based Access Control. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 
+
+
+
+
+
+
+
+
+
+
+ý106.- Scalable web app used globally to download/upload up to GBs. Cheapest solution to minimize latency: 
+	A: S3 Transfer Acc to host the app. 
+	B: S3 CacheControl. 
+	C: EC2 + ASG + CloudFront. 
+	D: EC2 + ASG + ElastiCache. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> C. 
+
+
+
+
+
+
+
+
+
+
+
+ý107.- Stateless web app = Lambdas + API GW. Deploy it across Regions to provide Regional faiolver cap. 
+Route traffic to multiple Regions: 
+	A: Route 53 health checks, active-active. 
+	B: CloudFront distribution, origin per Region, health checks. 
+	C: Transit GW. 
+	D: ALB. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> A. 
+
+
+
+
+
+
+
+
+
+
+ý108.- Company migrates Apps + DBs -> AWS. Use = ECS, DX, RDS. 
+What does ops do.
+SELECT 3: 
+	A: Management of RDS infra. 
+	B: Create RDS DB instance + config scheduled maintenance window. 
+	C: Configure additional SW on ECS for monitoring, patch+log mgmt, host intrusion detection. 
+	D: Install patches for all minor + major DB versions for RDS. 
+	E: Ensure physical security of RDS infra. 
+	F: Enc data that moves through DX. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B, C, F. 
+
+
+
+
+
+
+
+ý109.- 3-tier app on a VPC. Principle of least privilege not being applied to SGs. 
+	A: SG rules using instance ID. 
+	B: SG rules using SG ID as src/dst. 
+	C: SG rules using VPC CIDR blocks. 
+	D: SG rules using subnet CIDR blocks. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> B. 
+
+
+
+
+
+
+
+ý110.- Legacy NAS on-prem presents SMB & NFS shared to client workstations.  
+Some data is accessed frequently, most old. Data -> S3 + Lifecycle Policies to reduce cost. 
+Which Storage GW: 
+	A: Volume GW. 
+	B: Tape GW. 
+	C: FSx File GW. 
+	D: S3 File GW. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------> D. 	// Cached Volumes = iSCSI. They need SMB+NFS = File GW! 
+

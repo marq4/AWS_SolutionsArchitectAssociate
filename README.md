@@ -1,6 +1,8 @@
 # AWS Solutions Architect Associate
 
 This are my notes, solutions, and examples for the ExamPro SAA-S03 course. <br />
-Instructor: Andrew Brown. <br />
-Support ExamPro by purchasing the course: https://www.exampro.co/aws-exam-solutions-architect-associate <br />
-I recommend this course as it includes the additional learning materials and support from their staff.
+
+I cleared the exam on the 9th of May 2025. <br />
+
+When you get all 50 questions from Cloud Vikings correct you can schedule your exam. <br />
+
