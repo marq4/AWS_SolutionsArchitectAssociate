@@ -1,6 +1,6 @@
 # AWS Solutions Architect Associate
 
-These are my notes, solutions, and examples for the ExamPro SAA-S03 course. <br />
+These are my notes, solutions, and examples for the SAA-S03 course. <br />
 
 I cleared the exam on the 9th of May 2025. <br />
 
